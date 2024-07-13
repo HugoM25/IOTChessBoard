@@ -29,8 +29,6 @@ class ChessEngine:
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
 
-        #print(f"Time to update moves possible in position: {time.time() - start_time:.2f} seconds.")
-
     def check_board_validity(self) -> bool:
         '''
         Checks if the board is valid.
@@ -59,19 +57,6 @@ class ChessEngine:
 
         return picked_pieces_index, dropped_pieces_index
     
-    def is_piece_under_attack(self, piece_index) -> bool:
-        '''
-        Checks if a piece is under attack.
-        @param piece_index: The index of the piece to check.
-        @return: True if the piece is under attack, False otherwise.
-        '''
-
-        for move in self.get_moves_possible_in_position() :
-            if move.is_capturing and move.end_pos_index == piece_index :
-                return True
-        
-        return False
-    
     def can_pieces_in_hand_take_piece(self, piece_index) -> bool:
         '''
         Checks if the pieces in hand can take a piece.
@@ -85,81 +70,7 @@ class ChessEngine:
                     return True
         
         return False
-
-    def execute_move(self, move, board) -> None:
-        '''
-        Executes a move.
-        @param move: The move to execute.
-        '''
-
-        # Check if the kind of move
-        if move.get_algebraic_notation().lower() in ["o-o", "o-o-o"]:
-            row = 1 if 'O' in move.get_algebraic_notation() else 8
-
-            # Castling kingside 
-            if move.get_algebraic_notation().lower() == "o-o" :
-                # Move the king to g
-                board.board_list[board.square_to_index("g" + str(row))] = board.board_list[board.square_to_index("e" + str(row))]
-                board.board_list[board.square_to_index("e" + str(row))] = None
-
-                # Move the rook to f
-                board.board_list[board.square_to_index("f" + str(row))] = board.board_list[board.square_to_index("h" + str(row))]
-                board.board_list[board.square_to_index("h" + str(row))] = None
-
-                print("HERE")
-            else :
-                # Castling queenside
-                # Move the king to c
-                board.board_list[board.square_to_index("c" + str(row))] = board.board_list[board.square_to_index("e" + str(row))]
-                board.board_list[board.square_to_index("e" + str(row))] = None
-
-                # Move the rook to d
-                board.board_list[board.square_to_index("d" + str(row))] = board.board_list[board.square_to_index("a" + str(row))]
-                board.board_list[board.square_to_index("a" + str(row))] = None  
-                print("HERE2")
-        else :
-            # Make the move (if it is a classic move or a capture move)
-
-            # Move the piece to the end position
-            board.board_list[move.end_pos_index] = board.board_list[move.start_pos_index]
-            board.board_list[move.start_pos_index] = None
-
-        # Update the moves tracking
-        self.current_move += 1
-        self.moves_played.append(move)
-        print(board.get_board_visual())
-
-        # Update en passant square (indicate the square behind the pawn moved two squares forward)
-        if move.piece_name.lower() == "p" and abs(move.start_pos_index - move.end_pos_index) == 16 :
-            indx= move.start_pos_index + (move.end_pos_index - move.start_pos_index) // 2
-            print(indx)
-            board.en_passant_square = board.index_to_square(indx)
-        else :
-            board.en_passant_square = "-"
-
-
-        # Update the castling rights
-        if 'k' in board.castling_rights_b :
-            if move.get_algebraic_notation() == "o-o" :
-                board.castling_rights_b = board.castling_rights_b.replace('k', '')
-        if 'q' in board.castling_rights_b :
-            if move.get_algebraic_notation() == "o-o-o" :
-                board.castling_rights_b = board.castling_rights_b.replace('q', '')
-        
-        if 'K' in board.castling_rights_w :
-            if move.get_algebraic_notation() == "O-O" :
-                board.castling_rights_w = board.castling_rights_w.replace('K', '')
-        if 'Q' in board.castling_rights_w :
-            if move.get_algebraic_notation() == "O-O-O" :
-                board.castling_rights_w = board.castling_rights_w.replace('Q', '')
-
-        # Switch player to move
-        board.player_to_move = "w" if board.player_to_move == "b" else "b"
-
-        # Update the last valid board
-        self.last_valid_board = board.get_board_fen()
-        print(f"Last valid board: {self.last_valid_board}")
-        
+ 
     def handle_moves(self, new_binary_board) -> None :
         '''
         Handles the moves of the player.
@@ -198,7 +109,11 @@ class ChessEngine:
                 if len(self.in_hand_pieces) > 0 and self.in_hand_pieces[0][0].name.lower() == "r" :
                     if self.board.square_to_index(self.square_to_put_rook_on) == dropped_piece_index :
                         # Execute the castling move
-                        self.execute_move(self.castling_move, self.board)
+                        self.board.execute_move(self.castling_move)
+                        # Update the moves tracking
+                        self.current_move += 1
+                        self.moves_played.append(self.castling_move)
+                        print(self.board.get_board_visual())
                         self.castling_move = None
                         self.square_to_put_rook_on = ""
                         self.led_com.reset_led_board()
@@ -207,8 +122,28 @@ class ChessEngine:
                     self.led_com.wrong_move_led_board()
         
         # En passant move
-        # if self.en_passant_move != None :
-            
+        if self.en_passant_move != None :
+            if picked_pieces_index[0].size > 0 :
+                # Get the piece picked up
+                picked_piece_index = picked_pieces_index[0][0]
+                picked_piece = self.board.board_list[picked_piece_index]
+
+                # Check if the piece taken is a pawn under the en passant square
+                if picked_piece != None and picked_piece.name.lower() == "p" :
+                    self.captured_pieces.append([picked_piece, picked_piece_index])
+
+                    self.board.execute_move(self.en_passant_move)
+                    self.en_passant_move = None
+
+                    self.current_move += 1
+                    self.moves_played.append(self.en_passant_move)
+                    print(self.board.get_board_visual())
+
+                    self.led_com.reset_led_board()
+
+                else :
+                    self.led_com.wrong_move_led_board()
+
 
         # Handle the picked up pieces
         elif picked_pieces_index[0].size > 0 : 
@@ -293,7 +228,11 @@ class ChessEngine:
             elif valid_move : 
                 # A valid move was done
                 print(f"Valid move has been done! (Move done: {move_done})")
-                self.execute_move(move_done, self.board)
+                self.board.execute_move(move_done)
+                # Update the moves tracking
+                self.current_move += 1
+                self.moves_played.append(move)
+                print(self.board.get_board_visual())
                 
                 # If the move is capturing a piece remove it from the hand pieces
                 if move_done.is_capturing :

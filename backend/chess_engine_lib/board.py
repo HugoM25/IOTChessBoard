@@ -231,17 +231,24 @@ class Board :
                 self.board_list[self.square_to_index("d" + str(row))] = self.board_list[self.square_to_index("a" + str(row))]
                 self.board_list[self.square_to_index("a" + str(row))] = None  
                 print("HERE2")
+        elif move.is_en_passant :
+            # Make the move (if it is an en passant move)
+            # Move the piece to the end position
+            self.board_list[move.end_pos_index] = self.board_list[move.start_pos_index]
+            self.board_list[move.start_pos_index] = None
+
+            # Remove the captured pawn
+            if self.player_to_move == "w" :
+                self.board_list[move.end_pos_index - 8] = None
+            else :
+                self.board_list[move.end_pos_index + 8] = None
+
         else :
             # Make the move (if it is a classic move or a capture move)
 
             # Move the piece to the end position
             self.board_list[move.end_pos_index] = self.board_list[move.start_pos_index]
             self.board_list[move.start_pos_index] = None
-
-        # Update the moves tracking
-        self.current_move += 1
-        self.moves_played.append(move)
-        print(self.get_board_visual())
 
         # Update en passant square (indicate the square behind the pawn moved two squares forward)
         if move.piece_name.lower() == "p" and abs(move.start_pos_index - move.end_pos_index) == 16 :
