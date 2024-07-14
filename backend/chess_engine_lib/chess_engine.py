@@ -6,7 +6,6 @@ from chess_engine_lib.led_com import LedCom
 
 # Import general modules
 import numpy as np
-import time 
 
 class ChessEngine:
     def __init__(self):
@@ -253,6 +252,7 @@ class ChessEngine:
         
         print(f"Current hand pieces: {self.in_hand_pieces}")
         print(f"Current captured pieces: {self.captured_pieces}")
+        print(f"Moves possible: {self.board.get_all_moves_in_position()}")
         
     
 

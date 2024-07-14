@@ -43,7 +43,7 @@ class Move :
         algebraic_notation += chr(ord('h') - self.end_pos_index % 8)
         algebraic_notation += str(self.end_pos_index // 8 + 1)
 
-        # Add a "+" if the move is a check
+        # Add a "+" if the move is a check or a "#" if the move is a checkmate
         if self.is_checkmate :
             algebraic_notation += "#"
         elif self.is_check :

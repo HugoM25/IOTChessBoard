@@ -11,6 +11,7 @@ class Board :
         self.en_passant_square: str = '-'
         self.halfmove_clock: int = 0
         self.fullmove_number: int = 1
+        self.moves_in_position: list[Move] = []
 
     def get_board_fen(self) -> str:
         '''
@@ -157,53 +158,99 @@ class Board :
         visual += "     a  b  c  d  e  f  g  h   "
         return visual
     
-    def get_moves_possible_in_position(self, check_verification=False) -> None:
+    def get_all_moves_in_position(self) -> None:
         '''
         Updates the list of moves possible in the current position.
         '''
         moves_possible_in_position_list = []
+        print("get_all_moves_in_position")
         # Loop through the board
         for i in range(0,64) :
+            piece = self.board_list[i]
             # If there is a piece on the square
-            if self.board_list[i] != None :
+            if piece != None :
                 # If the piece is of the color of the player to move
-                if self.board_list[i].color == self.player_to_move :
+                if piece.color == self.player_to_move :
 
                     # Get the possible moves of the piece
-                    possible_moves: list[Move] = self.board_list[i].possible_moves(self, i)
+                    possible_moves: list[Move] = piece.possible_moves(self, i)
                     # Loop through the possible moves
                     for move in possible_moves :
 
-                        if check_verification : 
-                            # Check if the move is valid
-                            board_copy = self.get_copy()
-                            board_copy.execute_move(move)
-                            if board_copy.is_piece_under_attack(board_copy.get_king_index(self.player_to_move)) == False :
-                                moves_possible_in_position_list.append(move)
+                        # Create a copy of the board
+                        board_copy = self.get_copy()
+                        # Execute the move on the copy
+                        board_copy.execute_move(move)
+                        # Check if the king of the player to move is in check after the move
+                        own_king_check = board_copy.check_verification(self.player_to_move)
+                        ennemy_king_check = board_copy.check_verification("w" if self.player_to_move == "b" else "b")
 
-                        else :
+                        # Ensure that the king of the player to move is not in check after the move
+                        if own_king_check == 0 :
                             moves_possible_in_position_list.append(move)
-                    
+
+                        # If the moves is a check notify it in the move object
+                        if ennemy_king_check == 1 :
+                            move.is_check = True
+                            # Check if the move is a checkmate
+                            if board_copy.check_if_any_move_is_available() == False:
+                                move.is_checkmate = True
+                
         return moves_possible_in_position_list
     
-    
-    def is_piece_under_attack(self, piece_index) -> bool:
-        '''
-        Checks if a piece is under attack.
-        @param piece_index: The index of the piece to check.
-        @return: True if the piece is under attack, False otherwise.
-        '''
 
-        for move in self.get_moves_possible_in_position(check_verification=False) :
-            if move.is_capturing and move.end_pos_index == piece_index :
-                return True
-        
+    def check_if_any_move_is_available(self) -> bool:
+        '''
+        Returns whether the player to move has any move available.
+        @return: Whether the player to move has any move available.
+        '''
+        # Loop through the board
+        for i in range(0,64) :
+            piece = self.board_list[i]
+            # If there is a piece on the square
+            if piece != None :
+                # If the piece is of the color of the player to move
+                if piece.color == self.player_to_move :
+
+                    # Get the possible moves of the piece
+                    possible_moves: list[Move] = piece.possible_moves(self, i)
+                    # Loop through the possible moves
+                    for move in possible_moves :
+
+                        # Create a copy of the board
+                        board_copy = self.get_copy()
+                        # Execute the move on the copy
+                        board_copy.execute_move(move)
+                        # Check if the king of the player to move is in check after the move
+                        own_king_check = board_copy.check_verification(self.player_to_move)
+
+                        # Ensure that the king of the player to move is not in check after the move
+                        if own_king_check == 0 :
+                            return True
         return False
     
-    def execute_move(self, move) -> None:
+    
+    def check_verification(self, color:str) -> bool :
+        '''
+        Check if the king of the color is in check
+        '''
+        # Get the index of the king
+        king_index = self.get_king_index(color)
+        # Loop through the board to find moves that can capture the king
+        for i in range(0,64) :
+            if self.board_list[i] != None :
+                if self.board_list[i].color != color :
+                    possible_moves: list[Move] = self.board_list[i].possible_moves(self, i)
+                    for move in possible_moves :
+                        if move.end_pos_index == king_index :
+                            return 1
+        return 0
+    
+    def execute_move(self, move) -> bool:
         '''
         Executes a move.
         @param move: The move to execute.
+        @return: Whether the move was a game-ending move (checkmate or stalemate).
         '''
 
         # Check if the kind of move
@@ -220,7 +267,6 @@ class Board :
                 self.board_list[self.square_to_index("f" + str(row))] = self.board_list[self.square_to_index("h" + str(row))]
                 self.board_list[self.square_to_index("h" + str(row))] = None
 
-                print("HERE")
             else :
                 # Castling queenside
                 # Move the king to c
@@ -230,7 +276,6 @@ class Board :
                 # Move the rook to d
                 self.board_list[self.square_to_index("d" + str(row))] = self.board_list[self.square_to_index("a" + str(row))]
                 self.board_list[self.square_to_index("a" + str(row))] = None  
-                print("HERE2")
         elif move.is_en_passant :
             # Make the move (if it is an en passant move)
             # Move the piece to the end position
@@ -253,7 +298,6 @@ class Board :
         # Update en passant square (indicate the square behind the pawn moved two squares forward)
         if move.piece_name.lower() == "p" and abs(move.start_pos_index - move.end_pos_index) == 16 :
             indx= move.start_pos_index + (move.end_pos_index - move.start_pos_index) // 2
-            print(indx)
             self.en_passant_square = self.index_to_square(indx)
         else :
             self.en_passant_square = "-"
@@ -273,6 +317,9 @@ class Board :
         if 'Q' in self.castling_rights_w :
             if move.get_algebraic_notation() == "O-O-O" :
                 self.castling_rights_w = self.castling_rights_w.replace('Q', '')
+        
+        if move.is_checkmate :
+            return True
 
         # Switch player to move
         self.player_to_move = "w" if self.player_to_move == "b" else "b"
@@ -334,10 +381,15 @@ class Board :
         @param color: The color of the king.
         @return: The index of the king.
         '''
-        if color == "w" :
-            return self.board_list.index(King("w"))
-        else :
-            return self.board_list.index(King("b"))
+        looking_for = "K" if color == "w" else "k"
+
+        for i in range(0,64) :
+            piece = self.board_list[i]
+            if piece != None :
+                if piece.name == looking_for :
+                    return i
+        return -1
+
         
 
     
