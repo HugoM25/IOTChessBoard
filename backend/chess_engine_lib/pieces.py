@@ -42,49 +42,30 @@ class Pawn(Piece):
         En passant is possible if the opponent moves a pawn two squares forward from its starting position, and the pawn could have captured it had it moved only one square forward.
         '''
         moves_list: list[Move] = []
-        # Basic moves (for white)
-        if self.color == "w" :
-            if chess_board.board_list[position+8] == None :
-                moves_list.append(Move(self.name, position, position+8))
+        dir_val = 1 if self.color == "w" else -1
 
-                if chess_board.board_list[position+16] == None and position < 16 :
-                    moves_list.append(Move(self.name, position, position+16))
-            
-            # En passant (check the en passant square and if it can be reached)
-            if chess_board.en_passant_square != '-' :
-                index_en_passant = chess_board.square_to_index(chess_board.en_passant_square)
-                if index_en_passant == position + 9 or index_en_passant == position + 7 :
-                    moves_list.append(Move(self.name, position, index_en_passant, is_en_passant=True))
+        if chess_board.board_list[position + 8 * dir_val] == None:
+            #Basic pawn move forward one square
+            moves_list.append(Move(self.name, position, position + 8 * dir_val))
 
-            # Capture moves
-            if position % 8 > 0 and chess_board.board_list[position+7] != None and chess_board.board_list[position+7].color != self.color :
-                moves_list.append(Move(self.name, position, position+7, is_capturing=True))
-            
-            if position % 8 < 7 and chess_board.board_list[position+9] != None and chess_board.board_list[position+9].color != self.color :
-                moves_list.append(Move(self.name, position, position+9, is_capturing=True))
-            
-        else :
-            if chess_board.board_list[position-8] == None :
-                moves_list.append(Move(self.name, position, position-8))
-
-                if chess_board.board_list[position-16] == None and position > 48 : 
-                    moves_list.append(Move(self.name, position, position-16))
-            
-            # En passant (check the en passant square and if it can be reached)
-            if chess_board.en_passant_square != '-' :
-                index_en_passant = chess_board.square_to_index(chess_board.en_passant_square)
-                if index_en_passant == position - 9 or index_en_passant == position - 7 :
-                    moves_list.append(Move(self.name, position, index_en_passant, is_en_passant=True))
-
-            # Capture moves
-            if position % 8 > 0 and chess_board.board_list[position-9] != None and chess_board.board_list[position-9].color != self.color :
-                moves_list.append(Move(self.name, position, position-9, is_capturing=True))
-            
-            if position % 8 < 7 and chess_board.board_list[position-7] != None and chess_board.board_list[position-7].color != self.color :
-                moves_list.append(Move(self.name, position, position-7, is_capturing=True))
-            
-            
-    
+            # If the pawn is at the starting position, it can move two squares forward
+            if (position // 8 == 1 and self.color == "w") or (position // 8 == 6 and self.color == "b") :
+                if chess_board.board_list[position + 16 * dir_val] == None :
+                    moves_list.append(Move(self.name, position, position + 16 * dir_val))
+        
+        # Capture moves
+        if position % 8 > 0 and chess_board.board_list[position + 8 * dir_val - 1] != None and chess_board.board_list[position + 8 * dir_val - 1].color != self.color :
+            moves_list.append(Move(self.name, position, position + 8 * dir_val - 1, is_capturing=True))
+        
+        if position % 8 < 7 and chess_board.board_list[position + 8 * dir_val + 1] != None and chess_board.board_list[position + 8 * dir_val + 1].color != self.color :
+            moves_list.append(Move(self.name, position, position + 8 * dir_val + 1, is_capturing=True))
+        
+        # En passant
+        if chess_board.en_passant_square != '-' :
+            index_en_passant = chess_board.square_to_index(chess_board.en_passant_square)
+            if index_en_passant == position + 8 * dir_val - 1 or index_en_passant == position + 8 * dir_val + 1 :
+                moves_list.append(Move(self.name, position, index_en_passant, is_en_passant=True))
+        
         return moves_list
 
 class Knight(Piece):
