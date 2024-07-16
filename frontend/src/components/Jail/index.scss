@@ -1,0 +1,23 @@
+.jail {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    border-bottom: solid 1px rgba(255, 255, 255, 0.2);
+
+    &.black {
+        justify-content: flex-start;
+    }
+
+    &.white {
+        justify-content: flex-end;
+    }
+
+    .jail-piece {
+        height: 50%;
+    }
+
+    .jail-piece.same {
+        margin-left: -5%;
+    }
+
+}

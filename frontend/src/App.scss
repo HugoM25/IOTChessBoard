@@ -1,0 +1,31 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+    background: rgb(159,177,182);
+    background: linear-gradient(39deg, rgba(159,177,182,1) 0%, rgba(74,119,134,1) 100%);
+    
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+
+.info-zone  {
+    display: flex;
+    padding-bottom: 10px;
+
+    &.white {
+      flex-direction: row;
+    }
+
+    &.black {
+      flex-direction: row-reverse;
+    }
+
+    
+}

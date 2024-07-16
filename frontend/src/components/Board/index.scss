@@ -1,0 +1,44 @@
+$boardSideSize : min(calc(90vh / 1.5), calc(90vw));
+
+.board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+
+    border-radius: 8px;
+    overflow: hidden;
+
+    width: $boardSideSize;
+    height: $boardSideSize;
+
+    // border: 1px solid rgba(255, 255, 255, 0.94);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+
+}
+
+.tile {
+    width: 100%;
+    height: auto;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.tile.light {
+    background: rgb(255, 255, 255, 0.2);
+}
+
+.tile.dark {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.tile > img {
+    width: 90%;
+    height: auto;
+}
+

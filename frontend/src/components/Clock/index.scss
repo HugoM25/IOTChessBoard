@@ -1,0 +1,41 @@
+.clock {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+
+    width: 25%;
+    height: 100%;
+
+    z-index: 4;
+
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+
+}
+
+.clock > span {
+    font-size: 1.5rem;
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.clock.white {
+    background: rgb(255, 255, 255, 0.2);
+    color: #fafaff;
+
+    > span {
+        color: black;
+    }
+}
+
+.clock.black {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fafaff;
+
+    > span {
+        color: white;
+    }
+}
