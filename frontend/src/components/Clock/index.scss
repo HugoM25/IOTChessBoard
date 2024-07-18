@@ -4,9 +4,8 @@
     align-items: center;
     padding: 10px;
     border-radius: 0.5rem;
-    margin: 1rem 0;
 
-    width: 25%;
+    width: 100%;
     height: 100%;
 
     z-index: 4;
@@ -16,8 +15,11 @@
 }
 
 .clock > span {
-    font-size: 1.5rem;
-
+    font-size: 2em; 
+    line-height: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }

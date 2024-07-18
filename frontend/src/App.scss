@@ -1,31 +1,113 @@
-body {
-    font-family: 'Roboto', sans-serif;
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 
+    font-family: 'Roboto', sans-serif;
+
+}
+
+body {
+
     background: rgb(159,177,182);
-    background: linear-gradient(39deg, rgba(159,177,182,1) 0%, rgba(74,119,134,1) 100%);
-    
+    background: linear-gradient(90deg, rgba(159,177,182,1) 0%, rgba(74,119,134,1) 100%);
+
+    display: grid;
+    grid-template-areas: "board-page" 
+                          "page-selection-zone";
+    grid-template-columns: 1fr;
+    grid-template-rows: 9fr auto;
+
+    place-items: center;
+
+    height: 100vh;
+
+    max-height: 100vh;
+    max-width: 100vw;
+}
+
+.board-page {
+
+    width:  min(calc(90vh / 1.5), calc(90vw));
+    grid-area: board-page;
 
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    gap: 10px;
+
+    > .info-zone {
+      display: grid;
+      grid-template-columns: 1fr 9fr;
+      grid-template-rows: 1fr;
+
+      min-width: 100%;
+
+      > .jail-zone {
+        grid-area: jail-zone;
+        padding-top: 10px;
+        width: 100%;
+      }
+
+      > .clock-zone {
+        grid-area: clock-zone;
+        padding: 10px;
+        width: 100%;
+      }
+  
+      &.white {
+        grid-template-columns: 9fr 1fr;
+        grid-template-areas: "jail-zone clock-zone";
+
+      }
+  
+      &.black {
+        grid-template-areas: "clock-zone jail-zone";
+      }
+  
+    }
+  
+}
+
+.page-selection-zone {
+  grid-area: page-selection-zone;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+
+  width: 100%;
+  height: 10vh;
+  min-height: 10vh;
+
+  > button {
+    // Make them round buttons
+    border-radius: 50%;
+
+    height: 3vh;
+    width: 3vh;
+
+    border: solid 1px rgba(255, 255, 255, 0.2);
+
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    transition: 0.1s;
+
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    &:active {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+
   }
-
-
-.info-zone  {
-    display: flex;
-    padding-bottom: 10px;
-
-    &.white {
-      flex-direction: row;
-    }
-
-    &.black {
-      flex-direction: row-reverse;
-    }
-
-    
 }
