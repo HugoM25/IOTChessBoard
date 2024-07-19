@@ -1,12 +1,19 @@
 .jail {
     width: 100%;
-    min-width: 100%;
+
+
+
+    min-width:100%;
+
+
     min-height: 100%;
 
     display: grid;
     // Queen 1fr, Rook 2fr, Bishop 2fr, Knight 2fr, Pawn 8fr 
     grid-template-columns: 2fr 2fr 2fr 2fr 7fr;
     grid-template-rows: 1fr;
+
+    gap: 10px;
 
     > div {
         display: flex;
@@ -17,7 +24,10 @@
 
         > .jail-piece {
             position: absolute;
-            width: 100%;
+
+            $dimension_piece : min(height, width);
+            width: $dimension_piece;
+            height: $dimension_piece;
         }
 
     }

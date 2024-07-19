@@ -1,0 +1,38 @@
+.page-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  
+    gap: 10px;
+  
+    width: 100%;
+    height: 10vh;
+    min-height: 10vh;
+  
+    > button {
+      // Make them round buttons
+      border-radius: 50%;
+  
+      height: 3vh;
+      width: 3vh;
+  
+      border: solid 1px rgba(255, 255, 255, 0.2);
+  
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+  
+      transition: 0.1s;
+  
+  
+      &:hover {
+        background: rgba(255, 255, 255, 0.4);
+      }
+  
+      &:active {
+        background: rgba(255, 255, 255, 0.6);
+      }
+  
+  
+    }
+}

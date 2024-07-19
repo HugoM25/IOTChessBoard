@@ -31,7 +31,7 @@ export default function Jail(props: JailProps) {
                             src={pieceMap[piece]} // Use pieceMap to get the correct SVG path
                             alt={piece}
                             className={`jail-piece ${i > 0 ? 'same' : ''}`} // Add "same" class to subsequent pieces
-                            style={{ left: `${i * 10}px` }} // Apply dynamic left position
+                            style={{ left: `${i * 20}%` }} // Apply dynamic left position
                         />
                     ))
                 }
