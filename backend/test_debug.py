@@ -34,9 +34,6 @@ pieces_picked = 0
 # Setup chess engine
 myEngine : ChessEngine = ChessEngine()
 
-# Initial board
-myEngine.board.set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-
 binary_board = np.zeros(64, dtype=int)
 # Change two first rows to 1
 binary_board[0:16] = 1

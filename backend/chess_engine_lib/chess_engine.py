@@ -8,25 +8,37 @@ from chess_engine_lib.led_com import LedCom
 import numpy as np
 
 class ChessEngine:
-    def __init__(self):
+    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") -> None:
+        
+        # Setup the initial board
         self.board = Board()
+        # Set the board to the desired initial FEN position
+        self.board.set_board_fen(initial_board_fen)
+        # Calculate the possible moves in the current position
+        self.current_moves_possible = self.board.get_all_moves_in_position()
+
+        self.last_valid_board = initial_board_fen
+        self.initial_board_fen = initial_board_fen
+
+        # Setup the binary board
+        self.binary_board = np.zeros(64, dtype=int)
+
+        # Setup the LED communication
         self.led_com = LedCom()
 
-        self.test_board = Board()
-
+        # Setup the game tracking 
+        self.current_move = 0
         self.in_hand_pieces = []
         self.captured_pieces = []
 
-        self.last_valid_board = ""
 
-        self.binary_board = np.zeros(64, dtype=int)
-        self.current_move = 0
 
         self.moves_played = []
 
         self.castling_move = None
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
+
 
     def check_board_validity(self) -> bool:
         '''
@@ -108,11 +120,7 @@ class ChessEngine:
                 if len(self.in_hand_pieces) > 0 and self.in_hand_pieces[0][0].name.lower() == "r" :
                     if self.board.square_to_index(self.square_to_put_rook_on) == dropped_piece_index :
                         # Execute the castling move
-                        self.board.execute_move(self.castling_move)
-                        # Update the moves tracking
-                        self.current_move += 1
-                        self.moves_played.append(self.castling_move)
-                        print(self.board.get_board_visual())
+                        self.apply_move(self.castling_move)
                         self.castling_move = None
                         self.square_to_put_rook_on = ""
                         self.led_com.reset_led_board()
@@ -121,7 +129,7 @@ class ChessEngine:
                     self.led_com.wrong_move_led_board()
         
         # En passant move
-        if self.en_passant_move != None :
+        elif self.en_passant_move != None :
             if picked_pieces_index[0].size > 0 :
                 # Get the piece picked up
                 picked_piece_index = picked_pieces_index[0][0]
@@ -131,12 +139,10 @@ class ChessEngine:
                 if picked_piece != None and picked_piece.name.lower() == "p" :
                     self.captured_pieces.append([picked_piece, picked_piece_index])
 
-                    self.board.execute_move(self.en_passant_move)
+                    self.apply_move(self.en_passant_move)
+
                     self.en_passant_move = None
 
-                    self.current_move += 1
-                    self.moves_played.append(self.en_passant_move)
-                    print(self.board.get_board_visual())
 
                     self.led_com.reset_led_board()
 
@@ -162,9 +168,14 @@ class ChessEngine:
                     self.led_com.wrong_move_led_board()
             else : 
                 # If the piece is of the color of the player to move
-                # Get the possible moves of the piece
-                possible_moves: list[Move] = picked_piece.possible_moves(self.board, picked_piece_index)
-                print(f"Possible moves: {possible_moves}")
+                # Get the moves that are possible with this piece (from the moves list)
+                possible_moves = []
+                for move in self.current_moves_possible :
+                    if move.start_pos_index == picked_piece_index :
+                        possible_moves.append(move)
+                
+                print(f"Possible moves for this piece: {possible_moves}")
+
                 self.led_com.highlight_move_led_board(possible_moves)
             
             if self.check_board_validity() == False :
@@ -191,9 +202,12 @@ class ChessEngine:
             dropped_piece, last_know_pos = self.in_hand_pieces.pop(0)
             print(f"Piece dropped: {dropped_piece.name} on square {self.board.index_to_square(dropped_piece_index)}")
 
-            # Check if the move is valid (check if the drop position is in the possible moves of the piece 
-            # based on the last known position)
-            possible_moves: list[Move] = dropped_piece.possible_moves(self.board, last_know_pos)
+            # Check if the move is valid ( check if the drop position is in the possible moves of the piece)
+            possible_moves = []
+            for move in self.current_moves_possible :
+                if move.start_pos_index == last_know_pos and move.end_pos_index == dropped_piece_index :
+                    possible_moves.append(move)
+
             valid_move, move_done = False, None
 
             if dropped_piece.color == self.board.player_to_move :
@@ -227,11 +241,8 @@ class ChessEngine:
             elif valid_move : 
                 # A valid move was done
                 print(f"Valid move has been done! (Move done: {move_done})")
-                self.board.execute_move(move_done)
-                # Update the moves tracking
-                self.current_move += 1
-                self.moves_played.append(move)
-                print(self.board.get_board_visual())
+
+                self.apply_move(move_done)
                 
                 # If the move is capturing a piece remove it from the hand pieces
                 if move_done.is_capturing :
@@ -246,13 +257,38 @@ class ChessEngine:
             elif last_know_pos == dropped_piece_index : 
                 # Clear the LED board
                 self.led_com.reset_led_board()
-            
-            else : 
+            elif self.check_board_validity() == False :
                 self.led_com.wrong_move_led_board()
-        
-        print(f"Current hand pieces: {self.in_hand_pieces}")
-        print(f"Current captured pieces: {self.captured_pieces}")
-        print(f"Moves possible: {self.board.get_all_moves_in_position()}")
+            elif self.check_board_validity() == True :
+                self.led_com.reset_led_board()
+
+
+    def apply_move(self, move: Move) -> None:
+        '''
+        Applies a move to the board.
+        @param move: The move to apply.
+        '''
+        self.board.execute_move(move)
+        self.current_moves_possible = self.board.get_all_moves_in_position()
+        self.current_move += 1
+        self.moves_played.append(move)
+        print(self.board.get_board_visual())
+    
+    def reset_game(self) -> None:
+        '''
+        Resets the game.
+        '''
+        self.board.set_board_fen(self.last_valid_board)
+        self.current_moves_possible = self.board.get_all_moves_in_position()
+        self.current_move = 0
+        self.in_hand_pieces = []
+        self.captured_pieces = []
+        self.moves_played = []
+        self.castling_move = None
+        self.square_to_put_rook_on = ""
+        self.en_passant_move = None
+        self.led_com.reset_led_board()
+        print(self.board.get_board_visual())
         
     
 

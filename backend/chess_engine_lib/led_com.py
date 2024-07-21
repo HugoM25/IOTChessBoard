@@ -75,4 +75,13 @@ class LedCom:
         print(square)
         self.led_board_colors[square*3 + 2] = 255
 
+    def end_of_game_led_board(self) -> None : 
+        '''
+        Turns on all the LEDs in blue to indicate the end of the game.
+        '''
+        # Set all the LEDs to blue (only the blue channel is on so 3 out of 3)
+        self.reset_led_board()
+
+        self.led_board_colors[2::3] = 255
+
 
