@@ -1,0 +1,98 @@
+.settings-page {
+    display: flex;
+    flex-direction: column;
+    
+    
+    width:  min(calc(90vh / 1.5), calc(90vw));
+    height: min(calc(90vh / 1.5), calc(90vw));
+
+    gap: 10px;
+
+
+    > h1 {
+        color: white;
+    }
+
+    > .led-settings {
+
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        > h2 {
+            color: white;
+        }
+
+        > .brightness-selection-led {
+
+            display: flex;
+            width: 100%;
+            > label {
+                color: white;
+                width: 75%;
+            }
+
+            > input[type="range"] {
+                appearance: none;
+                margin-right: 15px;
+                width: 200px;
+                height: 7px;
+                border-radius: 5px;
+                background-size: 70% 100%;
+                background-repeat: no-repeat;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+        
+            > input[type="range"]::-webkit-slider-thumb {
+                appearance: none;
+                height: 20px;
+                width: 20px;
+                border-radius: 50%;
+                cursor: ew-resize;
+                box-shadow: 0 0 2px 0 #555;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                background: rgba(255, 255, 255, 0.8);
+            }
+        
+            > input[type="range"]::-moz-range-track {
+                background: #053a5f;
+                height: 0.5rem;
+            }
+
+        }
+
+        > .color-selection-led {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+
+            > div {
+                display: flex; 
+                justify-content: left;
+                align-items: center;
+
+                > input[type="color"] {
+                    height: 5vh;
+                    width: 25%;
+                    appearance: none;
+                    -moz-appearance: none;
+                    -webkit-appearance: none;
+                    background: none;
+                    border: 0;
+                    cursor: pointer;
+                    padding: 0;
+    
+                    border-radius: 16px;
+                    overflow: hidden;
+                }
+    
+                > label {
+                    color: white;
+                    width: 75%;
+                }
+            }
+        }
+    }
+}

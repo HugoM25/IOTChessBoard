@@ -7,12 +7,13 @@ type BoardProps = {
     fenString: string,
 }
 
-function parseFen(fenString:string): Tile[]{
+function parseFen(fenString: string): Tile[] {
     let tiles: Tile[] = [];
     let rows = fenString.split("/");
     for (let i = 0; i < rows.length; i++) {
         let row = rows[i];
         let rowTiles: Tile[] = [];
+        let isLight = i % 2 === 0; // Start with light if the row index is even, dark if odd
         for (let j = 0; j < row.length; j++) {
             let char = row[j];
             if (char === " ") {
@@ -20,15 +21,17 @@ function parseFen(fenString:string): Tile[]{
             }
             if (isNaN(parseInt(char))) {
                 rowTiles.push({
-                    color: (i + j) % 2 === 0 ? "light" : "dark",
+                    color: isLight ? "light" : "dark",
                     pieceName: char,
                 });
+                isLight = !isLight; // Switch color for next tile
             } else {
                 for (let k = 0; k < parseInt(char); k++) {
                     rowTiles.push({
-                        color: (i + j + k) % 2 === 0 ? "light" : "dark",
+                        color: isLight ? "light" : "dark",
                         pieceName: "",
                     });
+                    isLight = !isLight; // Switch color for next tile
                 }
             }
         }
@@ -36,7 +39,6 @@ function parseFen(fenString:string): Tile[]{
     }
     return tiles;
 }
-
 export default function Board(props: BoardProps) {
 
     const tiles : Tile[] = parseFen(props.fenString);

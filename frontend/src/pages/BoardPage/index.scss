@@ -1,0 +1,44 @@
+
+.board-page {
+
+    width:  min(calc(90vh / 1.5), calc(90vw));
+    grid-area: board-page;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    > .info-zone {
+      display: grid;
+      grid-template-columns: 1fr 9fr;
+      grid-template-rows: 1fr;
+
+      min-width: 100%;
+
+      > .jail-zone {
+        grid-area: jail-zone;
+        padding-top: 10px;
+        width: 100%;
+      }
+
+      > .clock-zone {
+        grid-area: clock-zone;
+        padding: 10px;
+        width: 100%;
+      }
+  
+      &.white {
+        grid-template-columns: 9fr 1fr;
+        grid-template-areas: "jail-zone clock-zone";
+
+      }
+  
+      &.black {
+        grid-template-areas: "clock-zone jail-zone";
+      }
+  
+    }
+  
+}

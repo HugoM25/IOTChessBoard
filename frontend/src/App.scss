@@ -10,10 +10,10 @@
 body {
 
     background: rgb(159,177,182);
-    background: linear-gradient(36deg, rgb(202, 202, 83) 0%, rgb(33, 177, 76) 100%);
+    background: linear-gradient(36deg, rgb(83, 166, 202) 0%, rgb(33, 79, 177) 100%);
 
     display: grid;
-    grid-template-areas: "board-page" 
+    grid-template-areas: "main-zone" 
                           "page-selection-zone";
     grid-template-columns: 1fr;
     grid-template-rows: 9fr auto;
@@ -26,50 +26,16 @@ body {
     max-width: 100vw;
 }
 
-.board-page {
+.main-zone {
+  grid-area: main-zone;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  }
 
-    width:  min(calc(90vh / 1.5), calc(90vw));
-    grid-area: board-page;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-
-    > .info-zone {
-      display: grid;
-      grid-template-columns: 1fr 9fr;
-      grid-template-rows: 1fr;
-
-      min-width: 100%;
-
-      > .jail-zone {
-        grid-area: jail-zone;
-        padding-top: 10px;
-        width: 100%;
-      }
-
-      > .clock-zone {
-        grid-area: clock-zone;
-        padding: 10px;
-        width: 100%;
-      }
-  
-      &.white {
-        grid-template-columns: 9fr 1fr;
-        grid-template-areas: "jail-zone clock-zone";
-
-      }
-  
-      &.black {
-        grid-template-areas: "clock-zone jail-zone";
-      }
-  
-    }
-  
-}
 .page-selection-zone {
   grid-area: page-selection-zone;
   display: flex;
+  min-height: 100%;
 }
