@@ -1,0 +1,30 @@
+{
+    "engine" : {
+        "default_fen" : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    },
+
+    "ai" : {
+        
+    },
+
+    "visuals" : {
+        "leds_options" : {
+            "led_brightness" : 0.5,
+            "led_color_under_attack_piece" : {
+                "r" : 255,
+                "g" : 0,
+                "b" : 0
+            },
+            "led_color_forced_move" : {
+                "r" : 0,
+                "g" : 0,
+                "b" : 255
+            },
+            "led_color_available_move" : {
+                "r" : 0,
+                "g" : 255,
+                "b" : 0
+            }
+        }
+    }
+}

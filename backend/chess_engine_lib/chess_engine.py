@@ -1,15 +1,16 @@
 # Import custom modules
 from chess_engine_lib.board import Board
-from chess_engine_lib.pieces import Piece
 from chess_engine_lib.move import Move
 from chess_engine_lib.led_com import LedCom
 
 # Import general modules
 import numpy as np
+import json 
+import serial
 
 class ChessEngine:
-    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") -> None:
-        
+    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", serial_com_obj:serial.Serial = None) -> None:
+
         # Setup the initial board
         self.board = Board()
         # Set the board to the desired initial FEN position
@@ -23,21 +24,23 @@ class ChessEngine:
         # Setup the binary board
         self.binary_board = np.zeros(64, dtype=int)
 
+        # Setup the serial communication (if there is one)
+        self.serial_com_obj = serial_com_obj
+
         # Setup the LED communication
-        self.led_com = LedCom()
+        self.led_com = LedCom(serial_obj=serial_com_obj)
 
         # Setup the game tracking 
         self.current_move = 0
         self.in_hand_pieces = []
         self.captured_pieces = []
 
-
-
         self.moves_played = []
 
         self.castling_move = None
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
+
 
 
     def check_board_validity(self) -> bool:
@@ -82,19 +85,22 @@ class ChessEngine:
         
         return False
  
-    def handle_moves(self, new_binary_board) -> None :
+    def handle_moves(self, new_binary_board) -> bool :
         '''
         Handles the moves of the player.
         Figure out which piece was picked up and which piece was dropped. 
         @param binary_board: The binary board (1 a piece is there, 0 a piece is not there).
         '''
+        valid_move = False
+
+        has_move_been_played = False
 
         # Detect the picked and dropped pieces
         picked_pieces_index, dropped_pieces_index = self.detect_pick_and_drop(new_binary_board)
 
         # If no move detected return
         if picked_pieces_index[0].size == 0 and  dropped_pieces_index[0].size == 0 :
-            return 
+            return has_move_been_played
         
         # Handling of special moves
         # Castling move
@@ -155,12 +161,13 @@ class ChessEngine:
             # Get the piece picked up
             picked_piece_index = picked_pieces_index[0][0]
             picked_piece = self.board.board_list[picked_piece_index]
+            print(f"Piece picked: {picked_piece.name} on square {self.board.index_to_square(picked_piece_index)}")
 
             if picked_piece == None :
                 # Piece could not be picked up there is no piece on the square
                 # Should only happen on the simulator
                 self.led_com.wrong_move_led_board()
-                return 
+                return has_move_been_played
             
             # Check the color of the piece
             if picked_piece.color != self.board.player_to_move : 
@@ -196,7 +203,7 @@ class ChessEngine:
                     self.led_com.wrong_move_led_board()
                 else :
                     self.led_com.reset_led_board()
-                return
+                return has_move_been_played
             
             # Get the piece dropped (assume it is the first piece in hand)
             dropped_piece, last_know_pos = self.in_hand_pieces.pop(0)
@@ -208,7 +215,7 @@ class ChessEngine:
                 if move.start_pos_index == last_know_pos and move.end_pos_index == dropped_piece_index :
                     possible_moves.append(move)
 
-            valid_move, move_done = False, None
+            move_done = None
 
             if dropped_piece.color == self.board.player_to_move :
                 for move in possible_moves :
@@ -261,6 +268,11 @@ class ChessEngine:
                 self.led_com.wrong_move_led_board()
             elif self.check_board_validity() == True :
                 self.led_com.reset_led_board()
+        
+        if valid_move :
+            has_move_been_played = True
+
+        return has_move_been_played
 
 
     def apply_move(self, move: Move) -> None:
@@ -289,8 +301,22 @@ class ChessEngine:
         self.en_passant_move = None
         self.led_com.reset_led_board()
         print(self.board.get_board_visual())
-        
+
     
+    def get_engine_infos(self) -> dict: 
+        '''
+        Returns the engine information to be processed by the frontend.
+        '''
+
+        engine_infos = {
+            "board_infos" : {
+                "board_fen": self.board.get_board_fen(),
+                "player_to_move": self.board.player_to_move,
+                "captured_pieces": self.captured_pieces,
+            }
+        }
+
+        return engine_infos
 
 
 
