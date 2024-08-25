@@ -163,7 +163,6 @@ class Board :
         Updates the list of moves possible in the current position.
         '''
         moves_possible_in_position_list = []
-        print("get_all_moves_in_position")
         # Loop through the board
         for i in range(0,64) :
             piece = self.board_list[i]

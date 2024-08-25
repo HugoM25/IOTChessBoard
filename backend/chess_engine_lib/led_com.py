@@ -1,20 +1,16 @@
 import numpy as np
-import time
-
 import serial
 
 from chess_engine_lib.move import Move
 
 
 class LedCom:
-    def __init__(self, serial_obj:serial.Serial=None) -> None:
+    def __init__(self, arduino_com:serial.Serial=None) -> None:
         # Define 1D array to represent the LED board used to store rgb colors
         self.led_board_colors = np.zeros(64*3, dtype=int)
 
-        # Define a flag to check if the serial connection is established
-        # If the flag is False, the LED commands will not be sent to the Arduino
-        self.serial_obj = serial_obj
-        self.last_command_sent = ""
+        self.arduino_com = arduino_com
+
     
     def convert_to_led_strip_index(self, index: int ) -> int :
         '''
@@ -38,8 +34,8 @@ class LedCom:
         self.led_board_colors = np.zeros(64*3, dtype=int)
 
         # If the serial connection is established, send the LED commands to the Arduino
-        if self.serial_obj != None: 
-            self.send_leds_commands("0-63", 0, 0, 0)
+        if self.arduino_com != None: 
+            self.arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
         
     def wrong_move_led_board(self) -> None : 
         '''
@@ -50,9 +46,8 @@ class LedCom:
 
         self.led_board_colors[0::3] = 255
 
-        if self.serial_obj != None: 
-            for i in range(64) : 
-                self.send_leds_commands("0-63", 255, 0, 0)
+        if self.arduino_com != None: 
+            self.arduino_com.send_leds_range_command(0, 63, (255, 0, 0))
     
     def highlight_move_led_board(self, moves: list[Move]) -> None : 
         '''
@@ -80,17 +75,11 @@ class LedCom:
                 self.led_board_colors[end_square*3 + 1] = 255
                 moves_end.append(self.convert_to_led_strip_index(end_square))
         
-
-        if self.serial_obj != None:
-            # Send all the moves to the Arduino at once using e.g. 0.1.2 format
+        if self.arduino_com != None :
             if len(moves_end) > 0:
-                self.send_leds_commands(".".join(map(str, moves_end)), 0, 255, 0)
-            # Send all the moves capturing to the Arduino
+                self.arduino_com.set_leds_with_colors(moves_end, (0, 255, 0))
             if len(moves_end_capturing) > 0:
-                self.send_leds_commands(".".join(map(str, moves_end_capturing)), 255, 0, 0)
-
-                
-        
+                self.arduino_com.set_leds_with_colors(moves_end_capturing, (255, 0, 0))
     
     def highlight_specific_move(self, move: Move)-> None :
         '''
@@ -104,39 +93,46 @@ class LedCom:
         end_square = move.end_pos_index
         # Set the start square to green
         self.led_board_colors[start_square*3 + 1] = 255
+        
+        if self.arduino_com != None: 
+            self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(end_square)], (0, 255, 0))
 
-        if self.serial_obj != None:
-            self.send_leds_commands(str(self.convert_to_led_strip_index(start_square)), 0, 255, 0)
 
         if move.is_capturing : 
             # Set the end square to red
             self.led_board_colors[end_square*3] = 255
 
-            if self.serial_obj != None:
-                self.send_leds_commands(str(self.convert_to_led_strip_index(end_square)), 255, 0, 0)
+            if self.arduino_com != None:
+                self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(end_square)], (255, 0, 0))
         else :
             # Set the end square to blue
             self.led_board_colors[end_square*3 + 2] = 255
 
-            if self.serial_obj != None: 
-                self.send_leds_commands(str(self.convert_to_led_strip_index(end_square)), 0, 0, 255)
+            if self.arduino_com != None: 
+                self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(end_square)], (0, 0, 255))
 
 
-   
-
-    def highlight_square_led_board(self, square: int) -> None : 
+    def highlight_square_led_board(self, square: int, color:tuple[int,int,int]) -> None : 
         '''
-        Highlights a square on the LED board.
+        Highlights a square on the LED board. 
         @param square: The square to highlight.
         '''
-        self.reset_led_board()
         
         # Set the square to blue
-        print(square)
         self.led_board_colors[square*3 + 2] = 255
 
-        if self.serial_obj != None: 
-            self.send_leds_commands(str(self.convert_to_led_strip_index(square)), 0, 0, 255)
+        if self.arduino_com != None: 
+            self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(square)], color)
+
+    def highlight_squares_led_board(self, squares: list[int], color:tuple[int,int,int]) -> None :
+        '''
+        Highlights the squares on the LED board.
+        @param squares: The squares to highlight.
+        '''
+        squares_led_strip = [self.convert_to_led_strip_index(square) for square in squares]
+
+        if self.arduino_com != None: 
+            self.arduino_com.set_leds_with_colors(squares_led_strip, color)
 
     def end_of_game_led_board(self) -> None : 
         '''
@@ -147,28 +143,8 @@ class LedCom:
 
         self.led_board_colors[2::3] = 255
 
-        if self.serial_obj != None: 
-            self.send_leds_commands("0-63", 0, 0, 255)
-
-    def send_leds_commands(self, led_index: str, r: int, g: int, b: int) -> None:
-        """
-        Send an LED command to the Arduino to control a specific LED, multiple LEDs, or a range of LEDs.
-
-        :param led_index: Index, range, or multiple indices of LEDs to control (e.g., "10", "0-32", "1.2.3.4").
-        :param r: Red color intensity (0 to 255).
-        :param g: Green color intensity (0 to 255).
-        :param b: Blue color intensity (0 to 255).
-        """
-        if self.last_command_sent == f"{led_index},{r},{g},{b}\n":
-            return
-
-        command = f"{led_index},{r},{g},{b}\n"
-        self.serial_obj.write(command.encode())
-        self.serial_obj.flush()
-
-        print(f"Sent command: {command}")
-        self.last_command_sent = command
-
+        if self.arduino_com != None: 
+            self.arduino_com.send_leds_range_command(0, 63, (0, 0, 255))
 
             
 

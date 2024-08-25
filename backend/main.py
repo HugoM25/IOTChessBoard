@@ -9,8 +9,10 @@ import json
 import time
 import serial
 
+
 # Libraries related to the chess engine
 from chess_engine_lib import ChessEngine
+from arduino_com import ArduinoCom
 import numpy as np
 
 app = Flask(__name__)
@@ -18,8 +20,16 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app)
 
 
+# Create an enum to define the different states of the game
+class GameState:
+    SETUP_START_POS = 0
+    PLAYING_GAME = 1
+    GAME_OVER = 2
+
+
 # Define the chess engine globally
 myEngine = None
+current_game_state = GameState.SETUP_START_POS
 
 @app.route('/api/v1/chess_engine_data', methods=['GET'])
 def get_chess_engine_data():
@@ -66,70 +76,64 @@ def handle_disconnect():
 
 def run_chess_engine(): 
     global myEngine
-    # Setup chess engine
-    myEngine = ChessEngine()
 
+    # Setup arduino_com object --------------------------------------------------------------------
+    serial_com_timeout = 2
+    arduino_com = ArduinoCom('COM6')
+    
+    # Wait for the serial connection to be established
+    start_time = time.time()
+    while not arduino_com.serial.is_open and time.time() - start_time < serial_com_timeout: 
+        time.sleep(0.1)
+    
+    time.sleep(2)
+    
+    # Ensure the connection is established
+    if arduino_com.serial.is_open:
+        print("Serial port opened")
+    else:
+        print("Error: Serial port not opened, no data will be sent/received to/from the Arduino")
+    
+    # Setup chess engine ---------------------------------------------------------------------
+    myEngine = ChessEngine(arduino_com=arduino_com)
+    # Load default board position 
     myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 
+    # TO DO : Implement a way to define a binary board from a fen position to avoid having to do this :
     binary_board = np.zeros(64, dtype=int)
-
-    # fen_list = ["rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
-    #             "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2",
-    #             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"]
-    # i = 0
-
-    # while True:
-    #     # Wait a bit
-    #     time.sleep(4)
-
-    #     socketio.emit('reload_backend', {})
-
-    #     myEngine.board.set_board_fen(fen_list[i])
-    #     i = (i + 1) % 3
-
-    serial_obj = serial.Serial('COM3', 9600, timeout=1)
-    time.sleep(2)
-    print("Serial port opened")
-
-    # Setup chess engine
-    myEngine = ChessEngine(serial_com_obj=serial_obj)
-
-    binary_board = np.zeros(64, dtype=int)
-    # Change two first rows to 1
+    # Change two first and two last rows to 1 
     binary_board[0:16] = 1
-    # Change two last rows to 1
     binary_board[48:64] = 1
-
     myEngine.binary_board = binary_board
 
+    arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
+    # Ask the Arduino to get the initial board state
+    arduino_com.ask_for_board_state()
+
+
+    # Main loop to handle the game state -----------------------------------------------------
     while True:
-        try:
-            if serial_obj.in_waiting > 0:
-                # Read data from serial and process it
-                data = serial_obj.readline().decode('utf-8').strip()
-                if data:  # Check if data is not empty
-                    board_matrix = list(map(int, data.split(',')))
-                    
-                    if len(board_matrix) == 64:  # Ensure that the data is of the correct length
-                        binary_board = np.array(board_matrix)
-                    else:
-                        print("Received incomplete data. Ignoring...")
-        except Exception as e:
-            print(f"Error: {e}")
+        # Read the board state from the Arduino (if available)
+        binary_board = arduino_com.read_board_data()
 
-        # Check if a move was played based on the received board state
-        was_move_played = myEngine.handle_moves(binary_board)
+        if binary_board is None : 
+            # No data has been read, meaning the board state has not changed
+            continue
+            
+        print(binary_board)
 
-        if was_move_played:
-            socketio.emit('reload_backend', {})
-        
-        was_move_played : bool = myEngine.handle_moves(binary_board)
+        # Check the current game state to determine the action to take
+        if current_game_state == GameState.SETUP_START_POS:
+            # Help the player to set up the board in the correct position
+            myEngine.setup_start_position(binary_board)
 
-        if was_move_played:
-            socketio.emit('reload_backend', {})
+        elif current_game_state == GameState.PLAYING_GAME:
+            # Check if a move was played based on the received board state
+            was_move_played : bool = myEngine.handle_moves(binary_board)
+
+            if was_move_played:
+                socketio.emit('reload_backend', {})
     
-    serial_obj.close()
-
 
 if __name__ == '__main__':
     # Start the chess engine as background task

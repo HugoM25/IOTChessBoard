@@ -9,7 +9,7 @@ import json
 import serial
 
 class ChessEngine:
-    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", serial_com_obj:serial.Serial = None) -> None:
+    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arduino_com=None) -> None:
 
         # Setup the initial board
         self.board = Board()
@@ -23,12 +23,11 @@ class ChessEngine:
 
         # Setup the binary board
         self.binary_board = np.zeros(64, dtype=int)
+        self.last_binary_board = np.zeros(64, dtype=int)
 
-        # Setup the serial communication (if there is one)
-        self.serial_com_obj = serial_com_obj
-
-        # Setup the LED communication
-        self.led_com = LedCom(serial_obj=serial_com_obj)
+        # Setup the Serial communication with the Arduino (if available)
+        self.arduino_com = arduino_com
+        self.led_com = LedCom(arduino_com)
 
         # Setup the game tracking 
         self.current_move = 0
@@ -317,6 +316,41 @@ class ChessEngine:
         }
 
         return engine_infos
+    
+
+    def setup_start_position(self, binary_board) -> bool:
+        '''
+        Tells the player which square needs to have a piece on it.
+        yellow light on the square that needs a piece
+        green light on the square that have a piece
+        '''
+
+        is_setup_correct = False
+
+        # compare if the board has the same configuration as the last known configuration
+        if np.array_equal(binary_board, self.last_binary_board) :
+            return is_setup_correct
+        
+        self.last_binary_board = binary_board.copy()
+        
+        # Compare the binary board with the squares that need a piece
+        diff = binary_board - self.binary_board
+        print(self.binary_board)
+        print(binary_board)
+
+        if np.sum(diff) == 0 :
+            # The board is already set up correctly
+            is_setup_correct = True
+            self.led_com.reset_led_board()
+
+        # Send the information to the LED board by highlighting the squares that need a piece
+        # self.led_com.highlight_squares_led_board(np.where(diff == 1)[0], (255, 255, 0))
+        # # Send the information to the LED board by highlighting the squares that have a piece
+        # self.led_com.highlight_squares_led_board(np.where(diff == 0)[0], (0, 255, 0))
+
+        return is_setup_correct
+        
+
 
 
 
