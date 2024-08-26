@@ -11,21 +11,6 @@ class LedCom:
 
         self.arduino_com = arduino_com
 
-    
-    def convert_to_led_strip_index(self, index: int ) -> int :
-        '''
-        Converts the index of the LED board to the index of the LED strip.
-        @param index: The index of the LED board.
-        @return: The index of the LED strip.
-        '''
-        row = index // 8
-        col = index % 8
-
-        if row % 2 == 0 : 
-            return row*8 + col
-        else : 
-            return row*8 + 7 - col
-
     def reset_led_board(self) -> None : 
         '''
         Resets the LED board to the default state.
@@ -69,11 +54,11 @@ class LedCom:
             if move.is_capturing : 
                 # Set the end square to red
                 self.led_board_colors[end_square*3] = 255
-                moves_end_capturing.append(self.convert_to_led_strip_index(end_square))
+                moves_end_capturing.append(end_square)
             else :
                 # Set the end square to green
                 self.led_board_colors[end_square*3 + 1] = 255
-                moves_end.append(self.convert_to_led_strip_index(end_square))
+                moves_end.append(end_square)
         
         if self.arduino_com != None :
             if len(moves_end) > 0:
@@ -95,7 +80,7 @@ class LedCom:
         self.led_board_colors[start_square*3 + 1] = 255
         
         if self.arduino_com != None: 
-            self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(end_square)], (0, 255, 0))
+            self.arduino_com.set_leds_with_colors([end_square], (0, 255, 0))
 
 
         if move.is_capturing : 
@@ -103,13 +88,13 @@ class LedCom:
             self.led_board_colors[end_square*3] = 255
 
             if self.arduino_com != None:
-                self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(end_square)], (255, 0, 0))
+                self.arduino_com.set_leds_with_colors([end_square], (255, 0, 0))
         else :
             # Set the end square to blue
             self.led_board_colors[end_square*3 + 2] = 255
 
             if self.arduino_com != None: 
-                self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(end_square)], (0, 0, 255))
+                self.arduino_com.set_leds_with_colors([end_square], (0, 0, 255))
 
 
     def highlight_square_led_board(self, square: int, color:tuple[int,int,int]) -> None : 
@@ -122,17 +107,16 @@ class LedCom:
         self.led_board_colors[square*3 + 2] = 255
 
         if self.arduino_com != None: 
-            self.arduino_com.set_leds_with_colors([self.convert_to_led_strip_index(square)], color)
+            self.arduino_com.set_leds_with_colors([square], color)
 
     def highlight_squares_led_board(self, squares: list[int], color:tuple[int,int,int]) -> None :
         '''
         Highlights the squares on the LED board.
         @param squares: The squares to highlight.
         '''
-        squares_led_strip = [self.convert_to_led_strip_index(square) for square in squares]
 
         if self.arduino_com != None: 
-            self.arduino_com.set_leds_with_colors(squares_led_strip, color)
+            self.arduino_com.set_leds_with_colors(squares, color)
 
     def end_of_game_led_board(self) -> None : 
         '''

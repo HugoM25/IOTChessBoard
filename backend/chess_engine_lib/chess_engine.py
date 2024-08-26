@@ -113,7 +113,7 @@ class ChessEngine:
 
                 # Check if the piece taken is a rook
                 if picked_piece != None and picked_piece.name.lower() == "r" :
-                    self.led_com.highlight_square_led_board(self.board.square_to_index(self.square_to_put_rook_on))
+                    self.led_com.highlight_square_led_board(self.board.square_to_index(self.square_to_put_rook_on), (0, 0, 255))
                     self.in_hand_pieces.append([picked_piece, picked_piece_index])
                 else :
                     self.led_com.wrong_move_led_board()
@@ -242,7 +242,7 @@ class ChessEngine:
                 rook_square = "a" if move_done.get_algebraic_notation().lower() == "o-o-o" else "h"
                 rook_square += "8" if move_done.piece_name == "k" else "1"
                 print(f"Rook square: {rook_square}")
-                self.led_com.highlight_square_led_board(self.board.square_to_index(rook_square))
+                self.led_com.highlight_square_led_board(self.board.square_to_index(rook_square), (0, 0, 255))
 
             elif valid_move : 
                 # A valid move was done
@@ -326,27 +326,24 @@ class ChessEngine:
         '''
 
         is_setup_correct = False
-
-        # compare if the board has the same configuration as the last known configuration
-        if np.array_equal(binary_board, self.last_binary_board) :
-            return is_setup_correct
-        
-        self.last_binary_board = binary_board.copy()
         
         # Compare the binary board with the squares that need a piece
         diff = binary_board - self.binary_board
-        print(self.binary_board)
-        print(binary_board)
 
         if np.sum(diff) == 0 :
             # The board is already set up correctly
             is_setup_correct = True
             self.led_com.reset_led_board()
-
+            return is_setup_correct
+        
         # Send the information to the LED board by highlighting the squares that need a piece
-        # self.led_com.highlight_squares_led_board(np.where(diff == 1)[0], (255, 255, 0))
-        # # Send the information to the LED board by highlighting the squares that have a piece
-        # self.led_com.highlight_squares_led_board(np.where(diff == 0)[0], (0, 255, 0))
+        self.led_com.highlight_squares_led_board(np.where(diff == -1)[0], (255, 255, 0))
+
+        # Get the list of indices where diff == 0 and self.binary_board == 1
+        # These are the squares that have a piece on them
+        squares_with_piece = np.where((diff == 0) & (self.binary_board == 1))[0]
+        self.led_com.highlight_squares_led_board(squares_with_piece, (0, 255, 0))
+
 
         return is_setup_correct
         

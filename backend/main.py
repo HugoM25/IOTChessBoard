@@ -76,6 +76,7 @@ def handle_disconnect():
 
 def run_chess_engine(): 
     global myEngine
+    global current_game_state
 
     # Setup arduino_com object --------------------------------------------------------------------
     serial_com_timeout = 2
@@ -125,7 +126,12 @@ def run_chess_engine():
         # Check the current game state to determine the action to take
         if current_game_state == GameState.SETUP_START_POS:
             # Help the player to set up the board in the correct position
-            myEngine.setup_start_position(binary_board)
+            is_setup_done = myEngine.setup_start_position(binary_board)
+
+            if is_setup_done :
+                # Change the game state to PLAYING_GAME
+                current_game_state = GameState.PLAYING_GAME
+                socketio.emit('reload_backend', {})
 
         elif current_game_state == GameState.PLAYING_GAME:
             # Check if a move was played based on the received board state

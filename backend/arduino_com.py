@@ -6,6 +6,7 @@ class ArduinoCom():
     def __init__(self, port: str, baud_rate: int = 9600, timeout: int = 2) -> None:
         self.serial = serial.Serial(port, baud_rate, timeout=timeout)
         self.last_command_sent = ""
+        self.led_strip_colors_state = np.zeros((64, 3), dtype=int)
     
     def index_square_to_led_strip(self, index: int) -> int:
         """
@@ -104,7 +105,7 @@ class ArduinoCom():
             return
         self.last_command_sent = command
 
-        print(f"Sending command: {command}")
+        print(f"Sending command: {command}") 
 
         self.serial.write(command.encode())
         self.serial.flush()
@@ -112,10 +113,3 @@ class ArduinoCom():
     def __del__(self):
         self.serial.close()
     
-
-if __name__ == '__main__':
-    arduino_com = ArduinoCom('COM6')
-    time.sleep(2)
-    #arduino_com.set_leds_with_colors([1,8,15], (0,0,255))
-    arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
-    #arduino_com.ask_for_board_state()
