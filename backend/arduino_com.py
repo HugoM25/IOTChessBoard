@@ -1,6 +1,7 @@
 import serial
 import numpy as np 
-import time 
+import time
+import sys
 
 class ArduinoCom(): 
     def __init__(self, port: str, baud_rate: int = 9600, timeout: int = 2) -> None:

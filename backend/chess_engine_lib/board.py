@@ -93,24 +93,23 @@ class Board :
                     color: str = "w"
                     if char.isupper() == False :
                         color = "b"
-            
-                    match char.lower() :
-                        case "p" :
-                            self.board_list.append(Pawn(color))
-                        case "n" :
-                            self.board_list.append(Knight(color))
-                        case "b" :
-                            self.board_list.append(Bishop(color))
-                        case "r" :
-                            self.board_list.append(Rook(color))
-                        case "q" :
-                            self.board_list.append(Queen(color))
-                        case "k" :
-                            self.board_list.append(King(color))
-                        case _ :
-                            print(fen)
-                            raise Exception("Invalid character in FEN.")
-                        
+                    
+                    if char.lower() == "p" :
+                        self.board_list.append(Pawn(color))
+                    elif char.lower() == "n" :
+                        self.board_list.append(Knight(color))
+                    elif char.lower() == "b" :
+                        self.board_list.append(Bishop(color))
+                    elif char.lower() == "r" :
+                        self.board_list.append(Rook(color))
+                    elif char.lower() == "q" :
+                        self.board_list.append(Queen(color))
+                    elif char.lower() == "k" :
+                        self.board_list.append(King(color))
+                    else : 
+                        print(fen)
+
+
         # Parse the player to move
         self.player_to_move = fen_split[1]
 

@@ -80,7 +80,7 @@ def run_chess_engine():
 
     # Setup arduino_com object --------------------------------------------------------------------
     serial_com_timeout = 2
-    arduino_com = ArduinoCom('COM6')
+    arduino_com = ArduinoCom('/dev/ttyUSB0')
     
     # Wait for the serial connection to be established
     start_time = time.time()
