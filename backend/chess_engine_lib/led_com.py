@@ -22,7 +22,7 @@ class LedCom:
         if self.arduino_com != None: 
             self.arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
         
-    def wrong_move_led_board(self) -> None : 
+    def wrong_move_led_board(self, last_piece_index:int = -1) -> None : 
         '''
         Turns on all the LEDs in red to indicate a wrong move.
         '''
@@ -33,8 +33,11 @@ class LedCom:
 
         if self.arduino_com != None: 
             self.arduino_com.send_leds_range_command(0, 63, (255, 0, 0))
+
+            if last_piece_index != -1:
+                self.arduino_com.set_leds_with_colors([last_piece_index], (255, 255, 255))
     
-    def highlight_move_led_board(self, moves: list[Move]) -> None : 
+    def highlight_move_led_board(self, moves: list[Move], piece_index: int) -> None : 
         '''
         Highlights the move on the LED board.
         @param move: The move to highlight.
@@ -61,6 +64,7 @@ class LedCom:
                 moves_end.append(end_square)
         
         if self.arduino_com != None :
+            self.arduino_com.set_leds_with_colors([piece_index], (255, 255, 255))
             if len(moves_end) > 0:
                 self.arduino_com.set_leds_with_colors(moves_end, (0, 255, 0))
             if len(moves_end_capturing) > 0:

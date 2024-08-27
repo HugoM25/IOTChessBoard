@@ -171,7 +171,7 @@ class ChessEngine:
             # Check the color of the piece
             if picked_piece.color != self.board.player_to_move : 
                 if self.can_pieces_in_hand_take_piece(picked_piece_index) == False :
-                    self.led_com.wrong_move_led_board()
+                    self.led_com.wrong_move_led_board(last_piece_index=picked_piece_index)
             else : 
                 # If the piece is of the color of the player to move
                 # Get the moves that are possible with this piece (from the moves list)
@@ -182,7 +182,7 @@ class ChessEngine:
                 
                 print(f"Possible moves for this piece: {possible_moves}")
 
-                self.led_com.highlight_move_led_board(possible_moves)
+                self.led_com.highlight_move_led_board(possible_moves, picked_piece_index)
             
             if self.check_board_validity() == False :
                 self.led_com.wrong_move_led_board() 
