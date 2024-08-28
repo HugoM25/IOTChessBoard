@@ -160,13 +160,14 @@ class ChessEngine:
             # Get the piece picked up
             picked_piece_index = picked_pieces_index[0][0]
             picked_piece = self.board.board_list[picked_piece_index]
-            print(f"Piece picked: {picked_piece.name} on square {self.board.index_to_square(picked_piece_index)}")
 
             if picked_piece == None :
                 # Piece could not be picked up there is no piece on the square
                 # Should only happen on the simulator
                 self.led_com.wrong_move_led_board()
                 return has_move_been_played
+            
+            print(f"Piece picked: {picked_piece.name} on square {self.board.index_to_square(picked_piece_index)}")
             
             # Check the color of the piece
             if picked_piece.color != self.board.player_to_move : 
