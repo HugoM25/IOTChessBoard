@@ -102,7 +102,6 @@ def run_chess_engine():
 
     arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
     # Ask the Arduino to get the initial board state
-    arduino_com.ask_for_board_state()
 
     # Main loop to handle the game state -----------------------------------------------------
     while True:
