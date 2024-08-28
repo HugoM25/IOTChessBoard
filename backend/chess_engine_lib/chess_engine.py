@@ -330,7 +330,7 @@ class ChessEngine:
         # Compare the binary board with the squares that need a piece
         diff = binary_board - self.binary_board
 
-        if np.sum(diff) == 0 :
+        if not diff.any() :
             # The board is already set up correctly
             is_setup_correct = True
             self.led_com.reset_led_board()
