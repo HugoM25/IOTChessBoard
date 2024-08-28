@@ -100,17 +100,9 @@ def run_chess_engine():
     # Load default board position 
     myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 
-    # TO DO : Implement a way to define a binary board from a fen position to avoid having to do this :
-    binary_board = np.zeros(64, dtype=int)
-    # Change two first and two last rows to 1 
-    binary_board[0:16] = 1
-    binary_board[48:64] = 1
-    myEngine.binary_board = binary_board
-
     arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
     # Ask the Arduino to get the initial board state
     arduino_com.ask_for_board_state()
-
 
     # Main loop to handle the game state -----------------------------------------------------
     while True:
@@ -120,7 +112,8 @@ def run_chess_engine():
         if binary_board is None : 
             # No data has been read, meaning the board state has not changed
             continue
-            
+        
+        print("Received binary board")
         print(binary_board)
 
         # Check the current game state to determine the action to take
@@ -146,3 +139,5 @@ if __name__ == '__main__':
     socketio.start_background_task(run_chess_engine)
 
     socketio.run(app, port=5000)
+
+    

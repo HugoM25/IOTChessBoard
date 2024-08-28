@@ -15,6 +15,7 @@ class ChessEngine:
         self.board = Board()
         # Set the board to the desired initial FEN position
         self.board.set_board_fen(initial_board_fen)
+
         # Calculate the possible moves in the current position
         self.current_moves_possible = self.board.get_all_moves_in_position()
 
@@ -22,8 +23,8 @@ class ChessEngine:
         self.initial_board_fen = initial_board_fen
 
         # Setup the binary board
-        self.binary_board = np.zeros(64, dtype=int)
-        self.last_binary_board = np.zeros(64, dtype=int)
+        self.binary_board = self.board.get_binary_board()
+        self.last_binary_board = self.binary_board
 
         # Setup the Serial communication with the Arduino (if available)
         self.arduino_com = arduino_com
@@ -300,7 +301,7 @@ class ChessEngine:
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
         self.led_com.reset_led_board()
-        print(self.board.get_board_visual())
+    
 
     
     def get_engine_infos(self) -> dict: 
@@ -347,6 +348,8 @@ class ChessEngine:
 
 
         return is_setup_correct
+
+
         
 
 

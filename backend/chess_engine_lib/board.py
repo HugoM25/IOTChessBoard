@@ -388,6 +388,25 @@ class Board :
                     return i
         return -1
 
+    def get_binary_board(self) : 
+        """
+        Returns the binary board of the current board
+        @return numpy array of the binary board equivalent of the current board
+        """
+
+        binary_board = np.zeros(64, dtype=int)
+
+        for i in range(len(self.board_list)) : 
+            square = self.board_list[i]
+            if square != None : 
+                binary_board[i] = 1
+            else : 
+                binary_board[i] = 0
+        
+        return binary_board
+        
+
+
         
 
     
