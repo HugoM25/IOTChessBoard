@@ -10,9 +10,11 @@ interface BoardPageProps {
   fenStringBoard: string;
   CapturedPiecesByWhite: string[];
   CapturedPiecesByBlack: string[];
+  timerWhite: number;
+  timerBlack: number; 
 }
 
-export default function BoardPage({fenStringBoard, CapturedPiecesByWhite, CapturedPiecesByBlack}: BoardPageProps) {
+export default function BoardPage({fenStringBoard, CapturedPiecesByWhite, CapturedPiecesByBlack, timerWhite, timerBlack}: BoardPageProps) {
 
     const [fenString, setFenString] = useState<string>(fenStringBoard);
     const [pieces_captured_white, setPiecesCapturedWhite] = useState<string[]>(CapturedPiecesByWhite);
@@ -34,7 +36,7 @@ export default function BoardPage({fenStringBoard, CapturedPiecesByWhite, Captur
             <Jail pieces={pieces_captured_white} isWhite={false}  /> 
           </div>
           <div className="clock-zone">
-            <Clock isWhite={true} />
+            <Clock isWhite={true} timeInSeconds={timerWhite} />
           </div>
         </div>
         <div className='board-display-zone'>
@@ -42,7 +44,7 @@ export default function BoardPage({fenStringBoard, CapturedPiecesByWhite, Captur
         </div>
         <div className="info-zone black">
           <div className="clock-zone">
-            <Clock isWhite={false} />
+            <Clock isWhite={false} timeInSeconds={timerBlack} />
           </div>
           <div className='jail-zone'>
             <Jail pieces={pieces_captured_black} isWhite={true} />

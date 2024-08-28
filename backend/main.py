@@ -104,16 +104,20 @@ def run_chess_engine():
     # Ask the Arduino to get the initial board state
 
     # Main loop to handle the game state -----------------------------------------------------
+    time_start_turn = time.time()
+    time_remaining_turn = 10000
     while True:
         # Read the board state from the Arduino (if available)
         binary_board = arduino_com.read_board_data()
 
         if binary_board is None : 
+
+            if time.time() - time_start_turn > time_remaining_turn:
+                print("too slow")
+                current_game_state = GameState.GAME_OVER
+
             # No data has been read, meaning the board state has not changed
             continue
-        
-        print("Received binary board")
-        print(binary_board)
 
         # Check the current game state to determine the action to take
         if current_game_state == GameState.SETUP_START_POS:
@@ -124,6 +128,7 @@ def run_chess_engine():
                 # Change the game state to PLAYING_GAME
                 current_game_state = GameState.PLAYING_GAME
                 socketio.emit('reload_backend', {})
+                time_start_turn = time.time()
 
         elif current_game_state == GameState.PLAYING_GAME:
             # Check if a move was played based on the received board state
@@ -131,6 +136,24 @@ def run_chess_engine():
 
             if was_move_played:
                 socketio.emit('reload_backend', {})
+
+                time_taken = time.time()- time_start_turn
+                
+                if myEngine.board.player_to_move == "w" : 
+                    time_remaining_turn = myEngine.timer_white
+                    myEngine.timer_black -= time_taken
+                else : 
+                    time_remaining_turn = myEngine.timer_black
+                    myEngine.timer_white -= time_taken
+
+                print(f"time black : {myEngine.timer_black:.2f}, time white : {myEngine.timer_white:.2f}")
+
+                time_start_turn = time.time()
+            
+        elif current_game_state == GameState.GAME_OVER: 
+            print("Game Over.")
+                
+                
     
 
 if __name__ == '__main__':

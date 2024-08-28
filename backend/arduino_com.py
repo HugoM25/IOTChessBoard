@@ -106,7 +106,7 @@ class ArduinoCom():
             return
         self.last_command_sent = command
 
-        print(f"Sending command: {command}") 
+        #print(f"Sending command: {command}") 
 
         self.serial.write(command.encode())
         self.serial.flush()

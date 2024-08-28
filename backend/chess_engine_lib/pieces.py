@@ -24,6 +24,13 @@ class Piece :
 
     def __repr__(self) -> str:
         return self.name
+    
+    def serialize(self) -> dict : 
+        dict_obj = {
+            'name' : self.name,
+            'color': self.color
+        }
+        return dict_obj
         
 
 class Pawn(Piece):

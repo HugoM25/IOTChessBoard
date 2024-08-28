@@ -41,6 +41,10 @@ class ChessEngine:
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
 
+        self.timer_classic = 10*60
+        self.timer_white = self.timer_classic
+        self.timer_black = self.timer_classic
+
 
 
     def check_board_validity(self) -> bool:
@@ -313,7 +317,11 @@ class ChessEngine:
             "board_infos" : {
                 "board_fen": self.board.get_board_fen(),
                 "player_to_move": self.board.player_to_move,
-                "captured_pieces": self.captured_pieces,
+                "captured_pieces": [piece[0].serialize() for piece in self.captured_pieces],
+                "clocks":{
+                    "white": self.timer_white,
+                    "black": self.timer_black
+                }
             }
         }
 
