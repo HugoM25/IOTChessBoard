@@ -9,7 +9,7 @@ import json
 import serial
 
 class ChessEngine:
-    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arduino_com=None) -> None:
+    def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arduino_com=None, stockfish_brain=None) -> None:
 
         # Setup the initial board
         self.board = Board()
@@ -45,6 +45,11 @@ class ChessEngine:
         self.timer_white = self.timer_classic
         self.timer_black = self.timer_classic
 
+
+        self.is_player_w_AI = False
+        self.is_player_b_AI = False 
+
+        self.stockfish_brain = stockfish_brain
 
 
     def check_board_validity(self) -> bool:
@@ -105,6 +110,8 @@ class ChessEngine:
         # If no move detected return
         if picked_pieces_index[0].size == 0 and  dropped_pieces_index[0].size == 0 :
             return has_move_been_played
+
+        
         
         # Handling of special moves
         # Castling move
@@ -188,7 +195,8 @@ class ChessEngine:
                 
                 print(f"Possible moves for this piece: {possible_moves}")
 
-                self.led_com.highlight_move_led_board(possible_moves, picked_piece_index)
+                if (self.board.player_to_move == "w" and self.is_player_w_AI == False) or (self.board.player_to_move == "b" and self.is_player_b_AI == False): 
+                    self.led_com.highlight_move_led_board(possible_moves, picked_piece_index)
             
             if self.check_board_validity() == False :
                 self.led_com.wrong_move_led_board() 
@@ -356,6 +364,7 @@ class ChessEngine:
 
 
         return is_setup_correct
+    
 
 
         

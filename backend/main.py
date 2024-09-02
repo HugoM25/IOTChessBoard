@@ -8,7 +8,7 @@ import threading
 import json
 import time
 import serial
-
+from stockfish import Stockfish
 
 # Libraries related to the chess engine
 from chess_engine_lib import ChessEngine
@@ -94,18 +94,34 @@ def run_chess_engine():
         print("Serial port opened")
     else:
         print("Error: Serial port not opened, no data will be sent/received to/from the Arduino")
+
+    # Load the stockfish binary
+    stockfish_path = "/home/rpi/Stockfish/src/stockfish"  
+
+    stockfish = Stockfish(
+        path=stockfish_path,
+        parameters={"Threads": 4, "Hash": 64}
+    )
     
     # Setup chess engine ---------------------------------------------------------------------
     myEngine = ChessEngine(arduino_com=arduino_com)
     # Load default board position 
     myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 
+
+    print(myEngine.board.get_board_visual())
+
     arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
     # Ask the Arduino to get the initial board state
-
+    arduino_com.ask_for_board_state()
     # Main loop to handle the game state -----------------------------------------------------
     time_start_turn = time.time()
     time_remaining_turn = 10000
+
+    move_stockfish_found = False
+    myEngine.is_player_b_AI = True
+
+
     while True:
         # Read the board state from the Arduino (if available)
         binary_board = arduino_com.read_board_data()
@@ -113,7 +129,6 @@ def run_chess_engine():
         if binary_board is None : 
 
             if time.time() - time_start_turn > time_remaining_turn:
-                print("too slow")
                 current_game_state = GameState.GAME_OVER
 
             # No data has been read, meaning the board state has not changed
@@ -149,6 +164,36 @@ def run_chess_engine():
                 print(f"time black : {myEngine.timer_black:.2f}, time white : {myEngine.timer_white:.2f}")
 
                 time_start_turn = time.time()
+
+                move_stockfish_found = False
+
+            fen_to_use = myEngine.board.get_board_fen()
+            
+            if move_stockfish_found == False :
+                if myEngine.board.player_to_move == "w" : 
+                    if myEngine.is_player_w_AI : 
+                        print("White is thinking....")
+                        # Display the move the AI wants to play
+                        stockfish.set_fen_position(fen_to_use)
+                        best_move = stockfish.get_best_move(wtime=1000, btime=1000)
+                        print(f"White thinks the best move is {best_move}")
+
+                        myEngine.led_com.show_AI_move(best_move)
+                        move_stockfish_found == True
+
+                else : 
+                    if myEngine.is_player_b_AI : 
+                        print("Black is thinking....")
+                        # Display the move the AI wants to play
+                        stockfish.set_fen_position(fen_to_use)
+                        best_move = stockfish.get_best_move(wtime=1000, btime=1000)
+                        print(f"Black thinks the best move is {best_move}")
+
+                        myEngine.led_com.show_AI_move(best_move)
+                        move_stockfish_found == True
+
+
+
             
         elif current_game_state == GameState.GAME_OVER: 
             print("Game Over.")

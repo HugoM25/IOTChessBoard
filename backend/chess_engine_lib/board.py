@@ -16,58 +16,60 @@ class Board :
     def get_board_fen(self) -> str:
         '''
         Returns the FEN of the board.
-        @param board: The board.
         @return: The FEN of the board.
         '''
         fen: str = ""
 
-        # Parse the pieces positions
+        # Parse the pieces positions in reversed order (bottom to top)
         empty_squares: int = 0
-        for i in range(0,64) :
-            if i % 8 == 0 and i != 0 :
-                if empty_squares != 0 :
+        for i in range(63, -1, -1):
+            if i % 8 == 7 and i != 63:
+                if empty_squares != 0:
                     fen += str(empty_squares)
                     empty_squares = 0
                 fen += "/"
-            if self.board_list[i] == None :
+            
+            if self.board_list[i] is None:
                 empty_squares += 1
-            else :
-                if empty_squares != 0 :
+            else:
+                if empty_squares != 0:
                     fen += str(empty_squares)
                     empty_squares = 0
-                fen += self.board_list[i].name
+                fen += self.board_list[i].name  # Assuming .name returns piece notation (e.g., 'P', 'r', etc.)
+        
+        # Handle trailing empty squares if any
+        if empty_squares != 0:
+            fen += str(empty_squares)
         
         # Parse the player to move
-        fen += " " + self.player_to_move
-
+        fen += " " + self.player_to_move  # Expecting 'w' or 'b'
+        
         # Parse the castling rights
         fen += " "
-        if self.castling_rights_w == "" and self.castling_rights_b == "" :
+        if self.castling_rights_w == "" and self.castling_rights_b == "":
             fen += "-"
-        else :
-            if self.castling_rights_w != "" :
+        else:
+            if self.castling_rights_w != "":
                 fen += self.castling_rights_w
-            if self.castling_rights_b != "" :
+            if self.castling_rights_b != "":
                 fen += self.castling_rights_b
-
-        # TODO : Parse these sections of the FEN -------------------------
-
+        
         # Parse the en passant square
         fen += " "
-        if self.en_passant_square == "-" :
+        if self.en_passant_square == "-":
             fen += "-"
-        else :
-            fen += self.en_passant_square
+        else:
+            fen += self.en_passant_square  # Expecting something like 'a3', 'h6', etc.
         
         # Parse the halfmove clock
         fen += " " + str(self.halfmove_clock)
-
+        
         # Parse the fullmove number
         fen += " " + str(self.fullmove_number)
-
         
         return fen
-    
+
+
     def set_board_fen(self, fen: str) -> None:
         '''
         Sets the board to the FEN.

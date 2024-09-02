@@ -10,6 +10,14 @@ class LedCom:
         self.led_board_colors = np.zeros(64*3, dtype=int)
 
         self.arduino_com = arduino_com
+    
+    def square_to_index(self, square: str) -> int:
+        '''
+        Returns the index of the square.
+        @param square: The square name (e.g. "e4").
+        @return: The index of the square.
+        '''
+        return (int(square[1]) - 1) * 8 + ord('h') - ord(square[0]) 
 
     def reset_led_board(self) -> None : 
         '''
@@ -133,6 +141,20 @@ class LedCom:
 
         if self.arduino_com != None: 
             self.arduino_com.send_leds_range_command(0, 63, (0, 0, 255))
+
+
+    def show_AI_move(self, ai_move) -> None :
+        '''
+        Display the move the AI wants to play
+        '''
+
+        start_square = ai_move[0:2]
+        end_square = ai_move[2:4]
+        print(f"Ai wants to take the piece on {start_square} and put it on the {end_square} square")
+
+        if self.arduino_com != None : 
+            self.arduino_com.set_leds_with_colors([self.square_to_index(start_square), self.square_to_index(end_square)], (255,0,255))
+        
 
             
 
