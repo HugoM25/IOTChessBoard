@@ -8,6 +8,34 @@ class ArduinoCom():
         self.serial = serial.Serial(port, baud_rate, timeout=timeout)
         self.last_command_sent = ""
         self.led_strip_colors_state = np.zeros((64, 3), dtype=int)
+
+        # Queue for storing commands to be sent
+        self.command_queue = [] 
+        self.awaiting_ack = False
+
+
+
+    def wait_for_com(self, max_retries: int = 5) :
+        """
+        Wait for the communication to be on before going to the next step
+        """
+        retries = 0
+        while retries < max_retries:
+            command = "1001;"
+            self.serial.write(command.encode())
+            self.serial.flush()
+
+            # Wait for acknowledgment (ACK, in this case "1111;")
+            if self.wait_for_ack(timeout=20):
+                print(f"Command {command} acknowledged.")
+                return True  # Command was successfully acknowledged
+            else:
+                print(f"Retrying command: {command}")
+                retries += 1
+
+        print(f"Command {command} failed after {max_retries} retries.")
+        return False
+
     
     def index_square_to_led_strip(self, index: int) -> int:
         """
@@ -38,7 +66,7 @@ class ArduinoCom():
 
         command += ";"
 
-        self.send_command(command)
+        self.command_queue.append(command)
     
     def send_leds_range_command(self, start_index: int, end_index: int, color: tuple[int,int,int]):
         """
@@ -51,7 +79,9 @@ class ArduinoCom():
         command_id = 1
 
         command = f"{command_id:04b}{start_index:06b}{end_index:06b}{color[0]:08b}{color[1]:08b}{color[2]:08b};"
-        self.send_command(command)
+        
+        self.command_queue.append(command)
+
     
 
     def ask_for_board_state(self) -> None:
@@ -62,7 +92,8 @@ class ArduinoCom():
         command_id = 6
         command = f"{command_id:04b}000000;"
 
-        self.send_command(command)
+        self.command_queue.append(command)
+
 
     def read_board_data(self):
         """
@@ -96,20 +127,48 @@ class ArduinoCom():
             print(f"Error: {e}")
             return None
     
-    def send_command(self, command: str) -> None: 
-        '''
-        Send a command to the Arduino.
-        '''
+    def send_command(self, command: str, max_retries: int = 3) -> None: 
+        """
+        Send a command to the Arduino with acknowledgment and retries.
+        """
+        retries = 0
+        while retries < max_retries:
+            print(f"Sending command: {command}")
+            self.serial.write(command.encode())
+            self.serial.flush()
 
-        # Prevent sending the same command multiple times
-        if self.last_command_sent == command:
-            return
-        self.last_command_sent = command
+            # Wait for acknowledgment (ACK, in this case "1111;")
+            if self.wait_for_ack():
+                print(f"Command {command} acknowledged.")
+                return  # Command was successfully acknowledged
+            else:
+                print(f"Retrying command: {command}")
+                retries += 1
 
-        #print(f"Sending command: {command}") 
+        print(f"Command {command} failed after {max_retries} retries.")
+    
+    def wait_for_ack(self, timeout: int = 2) -> bool:
+        """
+        Wait for an acknowledgment (ACK) from the Arduino.
+        :param timeout: Time to wait for an ACK in seconds.
+        :return: True if ACK ("1111;") is received, False if timeout occurs.
+        """
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if self.serial.in_waiting > 0:
+                data = self.serial.read_until(b';').decode('utf-8').strip(';')
+                if data == "1111":  # ACK received
+                    return True
+        return False  # Timeout occurred
 
-        self.serial.write(command.encode())
-        self.serial.flush()
+    
+    def process_queue(self) : 
+        """
+        Process the command queue and send commands one at a time.
+        """
+        while self.command_queue:
+            command = self.command_queue.pop(0)
+            self.send_command(command)
 
     def __del__(self):
         self.serial.close()

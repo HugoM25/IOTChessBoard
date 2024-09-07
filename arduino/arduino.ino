@@ -121,6 +121,7 @@ void ReadCommands(){
         }
       }
       FastLED.show(); // Update the LEDs
+      SendAck();
     }
     else if (command_id == 4 ){
       int length = strtol(data.substring(4, 10).c_str(), nullptr, 2);
@@ -136,12 +137,24 @@ void ReadCommands(){
         st += 6; 
       }
       FastLED.show(); // Update the LEDs
+      SendAck();
     }
     else if (command_id == 6){
+      SendAck(); 
       SendBoardViaSerial(); 
+    }
+    else if (command_id == 9){
+      // This is a test command to see if is working
+      SendAck(); 
     }
 
     // Check the ID of the command 
   }
+}
+
+
+void SendAck(){
+  // Send acknowledgement to RPI 
+  Serial.print("1111;");
 }
 

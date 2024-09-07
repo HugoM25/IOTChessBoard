@@ -79,21 +79,16 @@ def run_chess_engine():
     global current_game_state
 
     # Setup arduino_com object --------------------------------------------------------------------
-    serial_com_timeout = 2
     arduino_com = ArduinoCom('/dev/ttyUSB0')
     
     # Wait for the serial connection to be established
-    start_time = time.time()
-    while not arduino_com.serial.is_open and time.time() - start_time < serial_com_timeout: 
-        time.sleep(0.1)
-    
-    time.sleep(2)
+    is_arduino_on = arduino_com.wait_for_com()
     
     # Ensure the connection is established
-    if arduino_com.serial.is_open:
-        print("Serial port opened")
+    if is_arduino_on:
+        print("Communication with arduino is OK")
     else:
-        print("Error: Serial port not opened, no data will be sent/received to/from the Arduino")
+        print("ERROR with arduino communication")
 
     # Load the stockfish binary
     stockfish_path = "/home/rpi/Stockfish/src/stockfish"  
@@ -114,6 +109,8 @@ def run_chess_engine():
     arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
     # Ask the Arduino to get the initial board state
     arduino_com.ask_for_board_state()
+    arduino_com.process_queue()
+
     # Main loop to handle the game state -----------------------------------------------------
     time_start_turn = time.time()
     time_remaining_turn = 10000
@@ -133,6 +130,8 @@ def run_chess_engine():
 
             # No data has been read, meaning the board state has not changed
             continue
+        
+        print(binary_board)
 
         # Check the current game state to determine the action to take
         if current_game_state == GameState.SETUP_START_POS:
@@ -168,35 +167,38 @@ def run_chess_engine():
                 move_stockfish_found = False
 
             fen_to_use = myEngine.board.get_board_fen()
-            
-            if move_stockfish_found == False :
-                if myEngine.board.player_to_move == "w" : 
-                    if myEngine.is_player_w_AI : 
-                        print("White is thinking....")
-                        # Display the move the AI wants to play
-                        stockfish.set_fen_position(fen_to_use)
-                        best_move = stockfish.get_best_move(wtime=1000, btime=1000)
-                        print(f"White thinks the best move is {best_move}")
 
-                        myEngine.led_com.show_AI_move(best_move)
-                        move_stockfish_found == True
+            # if move_stockfish_found == False :
+            #     if myEngine.board.player_to_move == "w" : 
+            #         if myEngine.is_player_w_AI : 
+            #             print("White is thinking....")
+            #             # Display the move the AI wants to play
+            #             stockfish.set_fen_position(fen_to_use)
+            #             best_move = stockfish.get_best_move(wtime=1000, btime=1000)
+            #             print(f"White thinks the best move is {best_move}")
 
-                else : 
-                    if myEngine.is_player_b_AI : 
-                        print("Black is thinking....")
-                        # Display the move the AI wants to play
-                        stockfish.set_fen_position(fen_to_use)
-                        best_move = stockfish.get_best_move(wtime=1000, btime=1000)
-                        print(f"Black thinks the best move is {best_move}")
+            #             myEngine.led_com.show_AI_move(best_move)
+            #             move_stockfish_found == True
 
-                        myEngine.led_com.show_AI_move(best_move)
-                        move_stockfish_found == True
+            #     else : 
+            #         if myEngine.is_player_b_AI : 
+            #             print("Black is thinking....")
+            #             # Display the move the AI wants to play
+            #             stockfish.set_fen_position(fen_to_use)
+            #             best_move = stockfish.get_best_move(wtime=1000, btime=1000)
+            #             print(f"Black thinks the best move is {best_move}")
+
+            #             myEngine.led_com.show_AI_move(best_move)
+            #             move_stockfish_found == True
 
 
 
             
         elif current_game_state == GameState.GAME_OVER: 
             print("Game Over.")
+        
+        # Process queued commands
+        arduino_com.process_queue()
                 
                 
     

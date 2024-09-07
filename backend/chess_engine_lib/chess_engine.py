@@ -354,6 +354,8 @@ class ChessEngine:
             self.led_com.reset_led_board()
             return is_setup_correct
         
+
+        
         # Send the information to the LED board by highlighting the squares that need a piece
         self.led_com.highlight_squares_led_board(np.where(diff == -1)[0], (255, 255, 0))
 
