@@ -6,6 +6,10 @@ import './App.scss';
 import BoardPage from './pages/BoardPage';
 import Settings from './pages/Settings';
 import PageSelector from './components/PageSelector';
+import MainPage from './pages/MainPage'; 
+
+import PopupProm from './components/PopupProm';
+
 
 const socket = io('http://localhost:5000', {
   transports: ['websocket', 'polling']
@@ -19,6 +23,18 @@ function App() {
   const [timerWhite, setTimerWhite] = useState<number>(0);
   const [timerBlack, setTimerBlack] = useState<number>(0);
 
+  const [isPopupOpen, setIsPopupOpen] = useState<boolean>(false);
+  const [promotionChoice, setPromotionChoice] = useState<string | null>(null);
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
+  };
+
+  const handlePromotionSelect = (choice: string) => {
+    setPromotionChoice(choice);
+    console.log('Promotion choice:', choice);
+    handleClosePopup();
+  };
 
   useEffect(() => {
     socket.on('reload_backend', async () => {
@@ -48,6 +64,10 @@ function App() {
         
         setTimerWhite(data.board_infos.clocks.white as number);
         setTimerBlack(data.board_infos.clocks.black as number);  
+
+        setIsPopupOpen(true); 
+
+
       }
       catch (error) {
         console.error('Error:', error);
@@ -70,12 +90,15 @@ function App() {
             
             <Route path="/settings" element={<Settings/>} />
 
-            <Route path="/jsp" element={<h1>JSP</h1>} />
+            <Route path="/jsp" element={<MainPage/>} />
           </Routes>
           </div>
           <div className="page-selection-zone">
             <PageSelector />
           </div>
+          {isPopupOpen && (
+              <PopupProm onClose={handleClosePopup} onSelect={handlePromotionSelect} />
+            )}
         </Router>
       </div>
     </>
