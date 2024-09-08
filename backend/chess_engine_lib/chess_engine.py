@@ -7,6 +7,7 @@ from chess_engine_lib.led_com import LedCom
 import numpy as np
 import json 
 import serial
+import time 
 
 class ChessEngine:
     def __init__(self, initial_board_fen:str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arduino_com=None, stockfish_brain=None) -> None:
@@ -45,6 +46,7 @@ class ChessEngine:
         self.timer_white = self.timer_classic
         self.timer_black = self.timer_classic
 
+        self.time_start_turn = time.time()
 
         self.is_player_w_AI = False
         self.is_player_b_AI = False 
@@ -94,7 +96,7 @@ class ChessEngine:
         
         return False
  
-    def handle_moves(self, new_binary_board) -> bool :
+    def handle_moves(self, new_binary_board) -> Move :
         '''
         Handles the moves of the player.
         Figure out which piece was picked up and which piece was dropped. 
@@ -272,7 +274,20 @@ class ChessEngine:
                             self.captured_pieces.append(piece_in_hand)
                             break
                 
-                self.led_com.reset_led_board()
+                # If the move is a mate then stops the game and turn the board blue
+                elif move_done.is_checkmate : 
+                    self.arduino_com.send_leds_range_command(0,63,(0,0,255))
+                
+                elif move_done.is_check : 
+                    # Highlight king pos
+                    if player_to_move == "b" :
+                        self.arduino_com.set_leds_with_colors([self.board.get_king_index('b')])
+                    else : 
+                        self.arduino_com.set_leds_with_colors([self.board.get_king_index('w')])
+
+                
+                else :
+                    self.led_com.reset_led_board()
 
             elif last_know_pos == dropped_piece_index : 
                 # Clear the LED board
@@ -282,10 +297,42 @@ class ChessEngine:
             elif self.check_board_validity() == True :
                 self.led_com.reset_led_board()
         
-        if valid_move :
-            has_move_been_played = True
+        # If a valid move has been done
+        if valid_move : 
 
-        return has_move_been_played
+            # If the player that has to play is an AI, display the move wanted
+            if self.is_player_b_AI :
+                if self.board.player_to_move == "b" :
+                        print("Black is thinking....")
+                        # Display the move the AI wants to play
+                        self.stockfish_brain.set_fen_position(self.board.get_board_fen())
+                        best_move = self.stockfish_brain.get_best_move(wtime=1000, btime=1000)
+                        print(f"Black thinks the best move is {best_move}")
+                        self.led_com.show_AI_move(best_move)
+            if self.is_player_w_AI :
+                if self.board.player_to_move == "w" :
+                        print("White is thinking....")
+                        # Display the move the AI wants to play
+                        self.stockfish_brain.set_fen_position(self.board.get_board_fen())
+                        best_move = self.stockfish_brain.get_best_move(wtime=1000, btime=1000)
+                        print(f"White thinks the best move is {best_move}")
+                        self.led_com.show_AI_move(best_move)
+            
+            # Update time taken from last turn's player
+            time_taken = time.time() - self.time_start_turn
+
+            if self.board.player_to_move == "b" : 
+                self.timer_white -= time_taken
+            
+            if self.board.player_to_move == "w" :
+                self.timer_black -= time_taken
+
+            self.time_start_turn = time.time()
+
+            # Return the move done 
+            return move_done
+
+        return None
 
 
     def apply_move(self, move: Move) -> None:

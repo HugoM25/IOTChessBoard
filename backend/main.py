@@ -99,13 +99,12 @@ def run_chess_engine():
     )
     
     # Setup chess engine ---------------------------------------------------------------------
-    myEngine = ChessEngine(arduino_com=arduino_com)
+    myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish)
     # Load default board position 
     myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 
-
-    print(myEngine.board.get_board_visual())
-
+    
+    # Clear the LED board
     arduino_com.send_leds_range_command(0, 63, (0, 0, 0))
     # Ask the Arduino to get the initial board state
     arduino_com.ask_for_board_state()
@@ -123,17 +122,15 @@ def run_chess_engine():
         # Read the board state from the Arduino (if available)
         binary_board = arduino_com.read_board_data()
 
+        # Check the data received from the Arduino
         if binary_board is None : 
-
             if time.time() - time_start_turn > time_remaining_turn:
                 current_game_state = GameState.GAME_OVER
-
             # No data has been read, meaning the board state has not changed
             continue
         
-        print(binary_board)
-
         # Check the current game state to determine the action to take
+        # Setup is used to show the current start FEN position to the player 
         if current_game_state == GameState.SETUP_START_POS:
             # Help the player to set up the board in the correct position
             is_setup_done = myEngine.setup_start_position(binary_board)
@@ -143,57 +140,23 @@ def run_chess_engine():
                 current_game_state = GameState.PLAYING_GAME
                 socketio.emit('reload_backend', {})
                 time_start_turn = time.time()
-
+        
+        # If the game is currently playing handle moves
         elif current_game_state == GameState.PLAYING_GAME:
             # Check if a move was played based on the received board state
-            was_move_played : bool = myEngine.handle_moves(binary_board)
+            move_played = myEngine.handle_moves(binary_board)
 
-            if was_move_played:
+            if move_played != None :
+                # Tells frontend to reload
                 socketio.emit('reload_backend', {})
-
-                time_taken = time.time()- time_start_turn
                 
+                # Switch time remaining for the turn's player
                 if myEngine.board.player_to_move == "w" : 
                     time_remaining_turn = myEngine.timer_white
-                    myEngine.timer_black -= time_taken
                 else : 
                     time_remaining_turn = myEngine.timer_black
-                    myEngine.timer_white -= time_taken
-
                 print(f"time black : {myEngine.timer_black:.2f}, time white : {myEngine.timer_white:.2f}")
 
-                time_start_turn = time.time()
-
-                move_stockfish_found = False
-
-            fen_to_use = myEngine.board.get_board_fen()
-
-            # if move_stockfish_found == False :
-            #     if myEngine.board.player_to_move == "w" : 
-            #         if myEngine.is_player_w_AI : 
-            #             print("White is thinking....")
-            #             # Display the move the AI wants to play
-            #             stockfish.set_fen_position(fen_to_use)
-            #             best_move = stockfish.get_best_move(wtime=1000, btime=1000)
-            #             print(f"White thinks the best move is {best_move}")
-
-            #             myEngine.led_com.show_AI_move(best_move)
-            #             move_stockfish_found == True
-
-            #     else : 
-            #         if myEngine.is_player_b_AI : 
-            #             print("Black is thinking....")
-            #             # Display the move the AI wants to play
-            #             stockfish.set_fen_position(fen_to_use)
-            #             best_move = stockfish.get_best_move(wtime=1000, btime=1000)
-            #             print(f"Black thinks the best move is {best_move}")
-
-            #             myEngine.led_com.show_AI_move(best_move)
-            #             move_stockfish_found == True
-
-
-
-            
         elif current_game_state == GameState.GAME_OVER: 
             print("Game Over.")
         
