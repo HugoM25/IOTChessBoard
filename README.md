@@ -1,9 +1,6 @@
 # IOT CHESSBOARD
 
-
-
-
-
+[documentation is not over]
 
 
 ## Communication protocol with Arduino Nano
