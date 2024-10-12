@@ -109,7 +109,7 @@ class LedCom:
                 self.arduino_com.set_leds_with_colors([end_square], (0, 0, 255))
 
 
-    def highlight_square_led_board(self, square: int, color:tuple[int,int,int]) -> None : 
+    def highlight_square_led_board(self, square: int, color:tuple[int,int,int]=(0,0,255)) -> None : 
         '''
         Highlights a square on the LED board. 
         @param square: The square to highlight.

@@ -99,9 +99,10 @@ def run_chess_engine():
     )
     
     # Setup chess engine ---------------------------------------------------------------------
-    myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish)
+    myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish, initial_board_fen='8/4P3/8/k7/8/8/8/3K4 w - - 0 1')
+    #myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish, initial_board_fen='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     # Load default board position 
-    myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    # myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 
     
     # Clear the LED board
@@ -115,7 +116,7 @@ def run_chess_engine():
     time_remaining_turn = 10000
 
     move_stockfish_found = False
-    myEngine.is_player_b_AI = True
+    myEngine.is_player_b_AI = False
 
 
     while True:

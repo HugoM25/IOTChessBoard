@@ -1,6 +1,27 @@
 from chess_engine_lib.move import Move
 import numpy as np
 
+
+def generate_piece_from_name(name:str) :
+    generated_piece = None 
+
+    color_of_piece = "w" if name.isupper() else "b"
+
+    if name == "Q" or name =="q" :
+        generated_piece = Queen(color=color_of_piece)
+    elif name == "K" or name == "k" :
+        generated_piece = King(color=color_of_piece)
+    elif name == "B" or name == "b" :
+        generated_piece = Bishop(color=color_of_piece)
+    elif name == "K" or name == "k" :
+        generated_piece = Knight(color=color_of_piece)
+    elif name == "R" or name == "r" :
+        generated_piece = Rook(color=color_of_piece)
+    elif name == "P" or name == "p" :
+        generated_piece = Pawn(color=color_of_piece)
+    
+    return generated_piece
+
 class Piece :
     def __init__(self) -> None:
         self.position: int = -1
@@ -31,6 +52,30 @@ class Piece :
             'color': self.color
         }
         return dict_obj
+
+
+class Unknown(Piece) :
+    '''
+    This class is used the user does not specify the type of piece when promoting. 
+    It should be able to determine itself based on the moves it does. 
+    To prevent the risk of misclassifying the piece, always specify the promotion in the web app.
+
+    /!\ CURRENTLY : To prevent any misjudgement I added a check 
+    '''
+    def __init__(self, color:str) -> None : 
+        super().__init__()
+        self.color: str = color
+
+        # List of the different pieces it could be
+        self.possible_names = ["q", "k", "b", "r"]
+    
+    def possible_moves(self, chess_board, position) -> list[Move] :
+        '''
+        Every time this piece does a move the 
+        '''
+        pass 
+
+
         
 
 class Pawn(Piece):
@@ -48,29 +93,42 @@ class Pawn(Piece):
         The pawn can capture pieces one square diagonally in front of it.
         En passant is possible if the opponent moves a pawn two squares forward from its starting position, and the pawn could have captured it had it moved only one square forward.
         '''
+
         moves_list: list[Move] = []
         dir_val = 1 if self.color == "w" else -1
+        
+        # Capture moves
+        pos_target_1 = position + (8 * dir_val - 1)
+        pos_target_2 = position + (8 * dir_val + 1)
 
-        if chess_board.board_list[position + 8 * dir_val] == None:
-            #Basic pawn move forward one square
-            moves_list.append(Move(self.name, position, position + 8 * dir_val))
+        if pos_target_1 < 64 and pos_target_1 >= 0 and chess_board.board_list[pos_target_1] != None and chess_board.board_list[pos_target_1].color != self.color :
+            moves_list.append(Move(self.name, position, position + (8 * dir_val - 1), is_capturing=True))
+        
+        if pos_target_2 < 64 and pos_target_2 >= 0 and chess_board.board_list[pos_target_2] != None and chess_board.board_list[pos_target_2].color != self.color :
+            moves_list.append(Move(self.name, position, position + (8 * dir_val + 1), is_capturing=True))
+        
+        # Forward moves
+        forward_1_pos = position + (8 * dir_val)
+        if forward_1_pos < 64 and forward_1_pos >= 0 and chess_board.board_list[forward_1_pos] == None:
 
             # If the pawn is at the starting position, it can move two squares forward
             if (position // 8 == 1 and self.color == "w") or (position // 8 == 6 and self.color == "b") :
                 if chess_board.board_list[position + 16 * dir_val] == None :
-                    moves_list.append(Move(self.name, position, position + 16 * dir_val))
-        
-        # Capture moves
-        if position % 8 > 0 and chess_board.board_list[position + 8 * dir_val - 1] != None and chess_board.board_list[position + 8 * dir_val - 1].color != self.color :
-            moves_list.append(Move(self.name, position, position + 8 * dir_val - 1, is_capturing=True))
-        
-        if position % 8 < 7 and chess_board.board_list[position + 8 * dir_val + 1] != None and chess_board.board_list[position + 8 * dir_val + 1].color != self.color :
-            moves_list.append(Move(self.name, position, position + 8 * dir_val + 1, is_capturing=True))
+                    moves_list.append(Move(self.name, position, position + (16 * dir_val)))
+
+            if (forward_1_pos >= 0 and forward_1_pos <= 7) or (forward_1_pos >= 56 and forward_1_pos <= 63) : 
+                # Promotion 
+                moves_list.append(Move(self.name, position, position + (8 * dir_val)))
+            else : 
+                #Basic pawn move forward one square
+                moves_list.append(Move(self.name, position, position + (8 * dir_val)))
+
+            
         
         # En passant
         if chess_board.en_passant_square != '-' :
             index_en_passant = chess_board.square_to_index(chess_board.en_passant_square)
-            if index_en_passant == position + 8 * dir_val - 1 or index_en_passant == position + 8 * dir_val + 1 :
+            if index_en_passant == position + (8 * dir_val - 1) or index_en_passant == position + (8 * dir_val + 1) :
                 moves_list.append(Move(self.name, position, index_en_passant, is_en_passant=True))
         
         return moves_list

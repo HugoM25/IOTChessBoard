@@ -1,4 +1,4 @@
-from chess_engine_lib.pieces import Piece, Pawn, Knight, Bishop, Rook, Queen, King 
+from chess_engine_lib.pieces import Piece, Pawn, Knight, Bishop, Rook, Queen, King, generate_piece_from_name
 from chess_engine_lib.move import Move
 import numpy as np
 
@@ -253,7 +253,7 @@ class Board :
         @return: Whether the move was a game-ending move (checkmate or stalemate).
         '''
 
-        # Check if the kind of move
+        # Check the kind of move
         if move.get_algebraic_notation().lower() in ["o-o", "o-o-o"]:
             row = 1 if 'O' in move.get_algebraic_notation() else 8
 
@@ -287,6 +287,12 @@ class Board :
                 self.board_list[move.end_pos_index - 8] = None
             else :
                 self.board_list[move.end_pos_index + 8] = None
+        
+        elif move.promote_to != "" : 
+            # Promote the piece 
+            self.board_list[move.start_pos_index] = None
+            new_piece = generate_piece_from_name(move.promote_to)
+            self.board_list[move.end_pos_index] = new_piece
 
         else :
             # Make the move (if it is a classic move or a capture move)
@@ -317,6 +323,12 @@ class Board :
         if 'Q' in self.castling_rights_w :
             if move.get_algebraic_notation() == "O-O-O" :
                 self.castling_rights_w = self.castling_rights_w.replace('Q', '')
+        
+        # If the king moved removed the castling rights from him
+        if move.piece_name == "k" :
+            self.castling_rights_b = ''
+        if move.piece_name == "K" : 
+            self.castling_rights_w = ''
         
         if move.is_checkmate :
             return True

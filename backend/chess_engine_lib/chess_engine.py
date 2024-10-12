@@ -2,6 +2,7 @@
 from chess_engine_lib.board import Board
 from chess_engine_lib.move import Move
 from chess_engine_lib.led_com import LedCom
+from chess_engine_lib.pieces import *
 
 # Import general modules
 import numpy as np
@@ -41,6 +42,9 @@ class ChessEngine:
         self.castling_move = None
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
+
+        self.promotion_move = None
+        self.piece_type_promotion = ""
 
         self.timer_classic = 10*60
         self.timer_white = self.timer_classic
@@ -112,14 +116,11 @@ class ChessEngine:
         # If no move detected return
         if picked_pieces_index[0].size == 0 and  dropped_pieces_index[0].size == 0 :
             return has_move_been_played
-
-        
         
         # Handling of special moves
         # Castling move
         if self.castling_move != None :
             # If a castling move is initiated (by moving the king two squares)
-
             if picked_pieces_index[0].size > 0 :
                 # Get the piece picked up
                 picked_piece_index = picked_pieces_index[0][0]
@@ -168,6 +169,39 @@ class ChessEngine:
                 else :
                     self.led_com.wrong_move_led_board()
 
+        # promotion move
+        elif self.promotion_move != None :
+            if picked_pieces_index[0].size > 0 :
+                picked_piece_index = picked_pieces_index[0][0]
+
+                # Check if the piece picked up is really the pawn under promotion
+                if self.promotion_move.end_pos_index == picked_piece_index :
+                    picked_piece = self.board.board_list[self.promotion_move.start_pos_index] 
+
+            elif dropped_pieces_index[0].size > 0 : 
+                dropped_piece_index = dropped_pieces_index[0][0]
+
+                # Check if the place where the piece has been dropped is the pawn spot
+                if self.promotion_move.end_pos_index == dropped_piece_index :
+                    dropped_piece = self.board.board_list[self.promotion_move.start_pos_index] 
+                    # Turn the pawn into the new type of piece (by default queen)
+                    type_promotion = "Q"
+                    # Check if the player wants to promote it to something else
+                    if self.piece_type_promotion != "" : 
+                        type_promotion = self.piece_type_promotion
+                    
+                    # Check the color of the piece 
+                    if self.promotion_move.piece_name.isupper() == True :
+                        type_promotion = type_promotion.upper()
+                    else : 
+                        type_promotion = type_promotion.lower()
+
+                    self.promotion_move.promote_to = type_promotion
+                    self.piece_type_promotion = ""
+
+                    self.apply_move(self.promotion_move)
+                    self.promotion_move = None
+                    self.led_com.reset_led_board()
 
         # Handle the picked up pieces
         elif picked_pieces_index[0].size > 0 : 
@@ -213,6 +247,7 @@ class ChessEngine:
 
             # Check if there are no pieces in hand to drop
             if len(self.in_hand_pieces) == 0 :
+
                 # Check if the board saved corresponds to the current binary board
                 if self.check_board_validity() == False :
                     self.led_com.wrong_move_led_board()
@@ -238,7 +273,19 @@ class ChessEngine:
                         valid_move, move_done = True, move
                         break
             
-            if move_done != None and move_done.get_algebraic_notation() == self.board.en_passant_square :
+            # Initiating pawn promotion 
+            # TO DO : handle capture promotion
+            if move_done != None and ( move_done.get_algebraic_notation() in ["a8", "b8", "c8","d8","e8","f8","g8","h8"] 
+                or move_done.get_algebraic_notation() in ["a1", "b1", "c1","d1","e1","f1","g1","h1"]) :
+
+                print("Initiating promotion move")
+                self.promotion_move = move_done
+                self.is_pawn_promoting = False
+
+                self.led_com.highlight_square_led_board(self.board.square_to_index(move_done.get_algebraic_notation()))
+
+            
+            elif move_done != None and move_done.get_algebraic_notation() == self.board.en_passant_square :
                 self.en_passant_move = move_done
                 if move_done.piece_name == "p" :
                     self.led_com.highlight_square_led_board(self.board.square_to_index(self.board.en_passant_square)+8)
@@ -273,19 +320,18 @@ class ChessEngine:
                             self.in_hand_pieces.remove(piece_in_hand)
                             self.captured_pieces.append(piece_in_hand)
                             break
-                
                 # If the move is a mate then stops the game and turn the board blue
                 elif move_done.is_checkmate : 
                     self.arduino_com.send_leds_range_command(0,63,(0,0,255))
-                
+
                 elif move_done.is_check : 
                     # Highlight king pos
-                    if player_to_move == "b" :
-                        self.arduino_com.set_leds_with_colors([self.board.get_king_index('b')])
+                    self.led_com.reset_led_board()
+                    if self.board.player_to_move == "b" :
+                        self.arduino_com.set_leds_with_colors([self.board.get_king_index('b')], (255,0,0))
                     else : 
-                        self.arduino_com.set_leds_with_colors([self.board.get_king_index('w')])
+                        self.arduino_com.set_leds_with_colors([self.board.get_king_index('w')], (255,0,0))
 
-                
                 else :
                     self.led_com.reset_led_board()
 
@@ -299,7 +345,7 @@ class ChessEngine:
         
         # If a valid move has been done
         if valid_move : 
-
+            print("Valid move has been done")
             # If the player that has to play is an AI, display the move wanted
             if self.is_player_b_AI :
                 if self.board.player_to_move == "b" :
