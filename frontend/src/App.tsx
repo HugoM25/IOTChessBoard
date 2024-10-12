@@ -57,16 +57,12 @@ function App() {
         setPiecesCapturedWhite(whiteCaptured);
         setPiecesCapturedBlack(blackCaptured);
 
-        console.log(pieces_captured_white);
-        console.log(pieces_captured_black);
-
-        
-        
         setTimerWhite(data.board_infos.clocks.white as number);
         setTimerBlack(data.board_infos.clocks.black as number);  
-
-        setIsPopupOpen(true); 
-
+        
+        if (data.board_infos.promoting){
+          setIsPopupOpen(true); 
+        }
 
       }
       catch (error) {

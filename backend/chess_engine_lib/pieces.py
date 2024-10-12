@@ -17,6 +17,8 @@ def generate_piece_from_name(name:str) :
         generated_piece = Knight(color=color_of_piece)
     elif name == "R" or name == "r" :
         generated_piece = Rook(color=color_of_piece)
+    elif name == "N" or name == "n" :
+        generated_piece = Knight(color=color_of_piece)
     elif name == "P" or name == "p" :
         generated_piece = Pawn(color=color_of_piece)
     
@@ -117,13 +119,14 @@ class Pawn(Piece):
                     moves_list.append(Move(self.name, position, position + (16 * dir_val)))
 
             if (forward_1_pos >= 0 and forward_1_pos <= 7) or (forward_1_pos >= 56 and forward_1_pos <= 63) : 
-                # Promotion 
-                moves_list.append(Move(self.name, position, position + (8 * dir_val)))
+                # Promotion for every piece possible to promote to
+                pieces_promotion = ["Q", "R", "N", "B"]
+                for i in range(0, len(pieces_promotion)) :
+                    moves_list.append(Move(self.name, position, position + (8 * dir_val), promote_to=pieces_promotion[i]))
+
             else : 
                 #Basic pawn move forward one square
                 moves_list.append(Move(self.name, position, position + (8 * dir_val)))
-
-            
         
         # En passant
         if chess_board.en_passant_square != '-' :

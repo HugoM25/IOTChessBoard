@@ -199,6 +199,7 @@ class ChessEngine:
                     self.promotion_move.promote_to = type_promotion
                     self.piece_type_promotion = ""
 
+
                     self.apply_move(self.promotion_move)
                     self.promotion_move = None
                     self.led_com.reset_led_board()
@@ -275,8 +276,7 @@ class ChessEngine:
             
             # Initiating pawn promotion 
             # TO DO : handle capture promotion
-            if move_done != None and ( move_done.get_algebraic_notation() in ["a8", "b8", "c8","d8","e8","f8","g8","h8"] 
-                or move_done.get_algebraic_notation() in ["a1", "b1", "c1","d1","e1","f1","g1","h1"]) :
+            if move_done != None and move_done.promote_to != "" :
 
                 print("Initiating promotion move")
                 self.promotion_move = move_done
@@ -422,7 +422,8 @@ class ChessEngine:
                 "clocks":{
                     "white": self.timer_white,
                     "black": self.timer_black
-                }
+                },
+                "promoting" : self.promotion_move != None
             }
         }
 

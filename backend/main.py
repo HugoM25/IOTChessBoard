@@ -46,6 +46,24 @@ def get_chess_engine_data():
             response = jsonify({"error": "Chess engine not initialized"})
         return response, 200
 
+@app.route('/api/v1/set_promotion_to', methods=["POST"])
+def set_promotion_to():
+    response = None
+    if request.method == "POST" :
+        try: 
+            data = request.json
+            promotion_piece = data.get('promotion_piece')
+            print(promotion_piece)
+            if promotion_piece and promotion_piece.lower() in ['q', 'r', 'b', 'n']:
+                myEngine.piece_type_promotion = promotion_piece
+                response = jsonify({"message": f"Promotion piece set to {promotion_piece}"}), 200
+            else:
+                response = jsonify({"error": "Invalid promotion piece"}), 400
+        except Exception as e:
+            response = jsonify({"error": str(e)}), 500
+    
+    return response
+
 @app.route('/update_parameters', methods=['POST'])
 def update_parameters(): 
     try:
@@ -99,7 +117,7 @@ def run_chess_engine():
     )
     
     # Setup chess engine ---------------------------------------------------------------------
-    myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish, initial_board_fen='8/4P3/8/k7/8/8/8/3K4 w - - 0 1')
+    myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish, initial_board_fen='8/1k2P3/3K4/8/8/8/8/8 w - - 0 1')
     #myEngine = ChessEngine(arduino_com=arduino_com, stockfish_brain=stockfish, initial_board_fen='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     # Load default board position 
     # myEngine.board.set_board_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
