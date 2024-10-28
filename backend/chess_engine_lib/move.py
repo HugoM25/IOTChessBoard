@@ -53,6 +53,8 @@ class Move :
             algebraic_notation += "#"
         elif self.is_check :
             algebraic_notation += "+"
+        elif self.is_stalemate :
+            algebraic_notation += "$"
 
         return algebraic_notation
     
