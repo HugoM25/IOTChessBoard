@@ -64,6 +64,33 @@ def set_promotion_to():
     
     return response
 
+@app.route('/api/v1/start_new_game', methods=['POST'])
+def start_new_game():
+    response = None
+    if request.method == "POST" : 
+        try : 
+
+            print("Try to start a new game")
+            data = request.json 
+            # Get the start fen position 
+            fen_pos_start = data.get('fen_pos_start')
+            
+            # Load it into the engine 
+            fen_loaded = myEngine.load_fen_pos(fen_pos_start)
+
+            if not fen_loaded : 
+                response = jsonify({"error": "Invalid fen string, could not start the game"}), 400
+            else : 
+                response = jsonify({"message": "Fen string loaded... game will start"})
+            
+            current_game_state = GameState.SETUP_START_POS
+
+            myEngine.action_done = True
+
+        except Exception as e:
+            response = jsonify({"error": str(e)}), 500
+    return response 
+
 @app.route('/update_parameters', methods=['POST'])
 def update_parameters(): 
     try:
@@ -136,17 +163,27 @@ def run_chess_engine():
     move_stockfish_found = False
     myEngine.is_player_b_AI = False
 
+    last_binary_board = None
 
     while True:
         # Read the board state from the Arduino (if available)
         binary_board = arduino_com.read_board_data()
 
         # Check the data received from the Arduino
-        if binary_board is None : 
+        if binary_board is None and myEngine.action_done == False: 
+
             if time.time() - time_start_turn > time_remaining_turn:
                 current_game_state = GameState.GAME_OVER
             # No data has been read, meaning the board state has not changed
             continue
+        elif myEngine.action_done : 
+
+            myEngine.action_done = False
+            binary_board = last_binary_board
+
+        else : 
+            last_binary_board = binary_board
+
         
         # Check the current game state to determine the action to take
         # Setup is used to show the current start FEN position to the player 

@@ -57,6 +57,8 @@ class ChessEngine:
 
         self.stockfish_brain = stockfish_brain
 
+        self.action_done = False
+
 
     def check_board_validity(self) -> bool:
         '''
@@ -406,6 +408,7 @@ class ChessEngine:
         Resets the game.
         '''
         self.board.set_board_fen(self.last_valid_board)
+        self.binary_board = self.board.get_binary_board()
         self.current_moves_possible = self.board.get_all_moves_in_position()
         self.current_move = 0
         self.in_hand_pieces = []
@@ -415,7 +418,22 @@ class ChessEngine:
         self.square_to_put_rook_on = ""
         self.en_passant_move = None
         self.led_com.reset_led_board()
-    
+
+    def load_fen_pos(self, fen_position) -> bool :
+        '''
+        Load a FEN position into the engine
+        '''
+
+        fen_loaded = False
+        # If the fen is valid load the fen position into the engine
+        if self.board.is_fen_valid(fen_position) : 
+
+            self.initial_board_fen = fen_position
+            self.last_valid_board = fen_position
+            self.reset_game()
+            fen_loaded = True
+        
+        return fen_loaded
 
     
     def get_engine_infos(self) -> dict: 
@@ -456,8 +474,6 @@ class ChessEngine:
             is_setup_correct = True
             self.led_com.reset_led_board()
             return is_setup_correct
-        
-
         
         # Send the information to the LED board by highlighting the squares that need a piece
         self.led_com.highlight_squares_led_board(np.where(diff == -1)[0], (255, 255, 0))

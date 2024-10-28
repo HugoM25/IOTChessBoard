@@ -68,6 +68,37 @@ class Board :
         fen += " " + str(self.fullmove_number)
         
         return fen
+    
+    def is_fen_valid(self, fen_position) -> bool:
+
+        fen_split: list[str] = fen_position.split(" ")
+
+        # Check that there is no more than one king for each colour
+        if fen_split[0].count('k') > 1 or fen_split[0].count('K') > 1 :
+            return False
+        
+        # Check that the sum of row empty squares and pieces adds up
+        nb_row = 0
+        for row in fen_split[0].split('/') :
+            count = 0
+            for char in row :
+                if char.isnumeric() : 
+                    count += int(char)
+                else: 
+                    count += 1
+                
+            if count != 8 :
+                return False
+            
+            nb_row += 1
+
+        # If there is not 8 rows then not valid
+        if nb_row != 8 :
+            return False
+
+        # If all the conditions above are met then the FEN is probably valid
+        # TO DO: Improve the conditions, invalid fen can still pass the tests right now...
+        return True
 
 
     def set_board_fen(self, fen: str) -> None:
@@ -133,7 +164,7 @@ class Board :
 
         # Parse the fullmove number
         self.fullmove_number = int(fen_split[5])
-    
+
     def get_board_visual(self) -> str:
         '''
         Returns the visual representation of the board.
