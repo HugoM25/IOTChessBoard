@@ -1,5 +1,5 @@
 class Move :
-    def __init__(self, piece_name:str, start_pos_index:int, end_pos_index:int, is_capturing:bool=False, is_check:bool=False, is_checkmate:bool=False, is_en_passant:bool=False, promote_to:str="") -> None:
+    def __init__(self, piece_name:str, start_pos_index:int, end_pos_index:int, is_capturing:bool=False, is_check:bool=False, is_checkmate:bool=False, is_en_passant:bool=False, is_stalemate:bool=False, promote_to:str="") -> None:
         self.piece_name = piece_name
         self.start_pos_index: int = start_pos_index
         self.end_pos_index: int = end_pos_index
@@ -7,7 +7,7 @@ class Move :
         self.is_check: bool = is_check
         self.is_checkmate: bool = is_checkmate
         self.is_en_passant: bool = is_en_passant
-
+        self.is_stalemate: bool = is_stalemate
         self.promote_to: str  = promote_to
 
     def get_algebraic_notation(self) -> str:

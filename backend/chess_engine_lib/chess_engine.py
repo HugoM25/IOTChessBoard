@@ -107,8 +107,8 @@ class ChessEngine:
         @param binary_board: The binary board (1 a piece is there, 0 a piece is not there).
         '''
         valid_move = False
-
         has_move_been_played = False
+        is_game_over = False
 
         # Detect the picked and dropped pieces
         picked_pieces_index, dropped_pieces_index = self.detect_pick_and_drop(new_binary_board)
@@ -140,7 +140,7 @@ class ChessEngine:
                 if len(self.in_hand_pieces) > 0 and self.in_hand_pieces[0][0].name.lower() == "r" :
                     if self.board.square_to_index(self.square_to_put_rook_on) == dropped_piece_index :
                         # Execute the castling move
-                        self.apply_move(self.castling_move)
+                        is_game_over = self.apply_move(self.castling_move)
                         self.castling_move = None
                         self.square_to_put_rook_on = ""
                         self.led_com.reset_led_board()
@@ -159,7 +159,7 @@ class ChessEngine:
                 if picked_piece != None and picked_piece.name.lower() == "p" :
                     self.captured_pieces.append([picked_piece, picked_piece_index])
 
-                    self.apply_move(self.en_passant_move)
+                    is_game_over = self.apply_move(self.en_passant_move)
 
                     self.en_passant_move = None
 
@@ -200,7 +200,7 @@ class ChessEngine:
                     self.piece_type_promotion = ""
 
 
-                    self.apply_move(self.promotion_move)
+                    is_game_over = self.apply_move(self.promotion_move)
                     self.promotion_move = None
                     self.led_com.reset_led_board()
 
@@ -311,7 +311,7 @@ class ChessEngine:
                 # A valid move was done
                 print(f"Valid move has been done! (Move done: {move_done})")
 
-                self.apply_move(move_done)
+                is_game_over = self.apply_move(move_done)
                 
                 # If the move is capturing a piece remove it from the hand pieces
                 if move_done.is_capturing :
@@ -345,7 +345,7 @@ class ChessEngine:
         
         # If a valid move has been done
         if valid_move : 
-            print("Valid move has been done")
+            print(f"Valid move has been done : {move_done}")
             # If the player that has to play is an AI, display the move wanted
             if self.is_player_b_AI :
                 if self.board.player_to_move == "b" :
@@ -386,11 +386,20 @@ class ChessEngine:
         Applies a move to the board.
         @param move: The move to apply.
         '''
-        self.board.execute_move(move)
+
+        is_game_over = self.board.execute_move(move)
+
+        if is_game_over == True :
+            print("Game is over...")
+
         self.current_moves_possible = self.board.get_all_moves_in_position()
         self.current_move += 1
         self.moves_played.append(move)
+
+        # Display board for debug purposes
         print(self.board.get_board_visual())
+
+        return is_game_over
     
     def reset_game(self) -> None:
         '''

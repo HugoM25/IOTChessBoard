@@ -195,7 +195,11 @@ class Board :
                             # Check if the move is a checkmate
                             if board_copy.check_if_any_move_is_available() == False:
                                 move.is_checkmate = True
-                
+                        else :
+                            # If no move available then it is stalemate
+                            if board_copy.check_if_any_move_is_available() == False:
+                                move.is_stalemate = True
+                        
         return moves_possible_in_position_list
     
 
@@ -329,15 +333,16 @@ class Board :
             self.castling_rights_b = ''
         if move.piece_name == "K" : 
             self.castling_rights_w = ''
-        
-        if move.is_checkmate :
-            return True
 
         # Switch player to move
         self.player_to_move = "w" if self.player_to_move == "b" else "b"
 
         # Update the last valid self
         self.last_valid_board = self.get_board_fen()
+        
+        # If the move is a game ending move stop the game
+        return move.is_checkmate or move.is_stalemate 
+
     
     def board_correspond_starting_pos(self) -> bool:
         '''
