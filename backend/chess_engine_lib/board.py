@@ -12,6 +12,7 @@ class Board :
         self.halfmove_clock: int = 0
         self.fullmove_number: int = 1
         self.moves_in_position: list[Move] = []
+        self.board_size = 64
 
     def get_board_fen(self) -> str:
         '''
@@ -189,6 +190,15 @@ class Board :
         visual += "    --------------------------\n"
         visual += "     a  b  c  d  e  f  g  h   "
         return visual
+
+    def get_pieces_on_board(self, except_list:[str]) -> None : 
+        pieces_names = []
+        for i in range(0, self.board_size) : 
+            piece = self.board_list[i]
+            if piece != None and piece.name not in except_list :
+                pieces_names.append(piece.name) 
+
+        return pieces_names
     
     def get_all_moves_in_position(self) -> None:
         '''
@@ -231,6 +241,18 @@ class Board :
                             if board_copy.check_if_any_move_is_available() == False:
                                 move.is_stalemate = True
                         
+                        pieces_on_board = board_copy.get_pieces_on_board(['k',"K"]) 
+                        # If they are only two kings then stalemate as well 
+                        if len(pieces_on_board) == 0 :
+                            move.is_stalemate = True
+
+                        # If there is only one knight on a side (or both) then stalemate
+                        elif len([piece for x in pieces_on_board if x in ["r","R","B","b","Q","q","p","P"]]) == 0 :
+                            n_b = pieces_on_board.count("n")
+                            n_w = pieces_on_board.count("N")
+                            if (n_w == 0 and n_b == 1) or (n_b == 0 and n_w == 1) or (n_w == 0 and n_b == 0) :
+                                move.is_stalemate = True
+                                                
         return moves_possible_in_position_list
     
 

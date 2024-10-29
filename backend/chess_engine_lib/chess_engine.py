@@ -119,6 +119,8 @@ class ChessEngine:
         if picked_pieces_index[0].size == 0 and  dropped_pieces_index[0].size == 0 :
             return has_move_been_played
         
+        led_matrix = [0 for i in range(64)]
+        
         # Handling of special moves
         # Castling move
         if self.castling_move != None :
@@ -323,9 +325,10 @@ class ChessEngine:
                             self.captured_pieces.append(piece_in_hand)
                             break
                 # If the move is a mate then stops the game and turn the board blue
-                elif move_done.is_checkmate : 
+                if move_done.is_checkmate : 
                     self.arduino_com.send_leds_range_command(0,63,(0,0,255))
-
+                elif move_done.is_stalemate : 
+                    self.arduino_com.send_leds_range_command(0,63,(255,255,0))
                 elif move_done.is_check : 
                     # Highlight king pos
                     self.led_com.reset_led_board()
@@ -333,8 +336,7 @@ class ChessEngine:
                         self.arduino_com.set_leds_with_colors([self.board.get_king_index('b')], (255,0,0))
                     else : 
                         self.arduino_com.set_leds_with_colors([self.board.get_king_index('w')], (255,0,0))
-
-                else :
+                else : 
                     self.led_com.reset_led_board()
 
             elif last_know_pos == dropped_piece_index : 
