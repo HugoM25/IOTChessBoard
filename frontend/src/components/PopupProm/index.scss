@@ -9,10 +9,54 @@
     justify-content: center;
     align-items: center;
 
-    > div {
-        background: linear-gradient(36deg, rgb(83, 166, 202) 0%, rgb(33, 79, 177) 100%);
 
+    > div {
+        background: rgb(83, 166, 202);
         width: 25%;
         height: 25%;
+        border-radius: 8px;
+
+        display:flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 20px;
+
+        > h2 {
+            color: white
+        }
+
+        > div {
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+
+            > button {
+
+                height: 100%;
+                width: auto; 
+
+                background: none;
+                color: inherit;
+
+                border: solid white 2px;
+                border-radius: 8px;
+
+                transition: transform 0.5s;
+
+
+                &:active {
+                    background: white;
+                }
+
+                &:hover {
+                    background: white;
+                    transform: scale(1.1) ;
+                }
+            }
+        }
+
     }
 }
